@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import time
 from tangent_parameterization import getPoints
 
+# essentially all of this will belong to the Domain class;
+
+# move to the domain class
 def _rho(pairs, theta_k):
     pt = 0
     n = 0
@@ -22,6 +25,7 @@ def _rho(pairs, theta_k):
         n += 1
     return pt
 
+# use more expressive names
 def _calc_part_1(x_list, y_list, theta_list, k):
     if k == 0:
         k_minus_1 = len(x_list) - 1
@@ -39,6 +43,7 @@ def _calc_part_1(x_list, y_list, theta_list, k):
             (math.sqrt((x_list[k] - x_list[k_minus_1])**2 + (y_list[k] - y_list[k_minus_1])**2))
             )
 
+# use more expressive names
 def _calc_part_2(x_list, y_list, theta_list, k):
     if k == len(x_list) - 1:
         k_plus_1 = 0
@@ -72,30 +77,25 @@ Constructs gradient in the form of:
               ])
 
     where the first column of t's is "first", the second column is "second, ...
+
 '''
+
+# Gradient of what?
+#
+# This is the gradient of the q-length function.
 def _gradient(t_theta_list, pairs):
     q = len(t_theta_list)
     x_list2, y_list2 = getPoints(pairs, t_theta_list)
 
     return np.array([calc_dLq_over_dTheta_k(x_list2, y_list2, t_theta_list, k, pairs) for k in range(q)])
 
-def gradient_ascent(start, pairs, learn_rate, n_iter = 10000, tolerance=1e-08):
-    vector = start
+def gradient_ascent(initial_condition, pairs, learn_rate, n_iter = 10000, tolerance=1e-08):
+    vector = initial_condition
 
     for i in range(n_iter):
         #print(_gradient(vector))
-        diff = learn_rate * _gradient(vector, pairs)
+        diff = _gradient(vector, pairs)
         if np.all(np.abs(diff) <= tolerance):
             break
-        vector += diff
+        vector += diff * learn_rate
     return vector
-
-
-if __name__ == "__main__":
-    points = gradient_ascent(
-         start=np.array([0.0,math.pi/2.0,math.pi,3*math.pi/2.0]), learn_rate=0.001
-    )
-
-    l = points.tolist()
-    for item in l:
-        print(item/(2*math.pi) % 1)
