@@ -103,37 +103,3 @@ if __name__ == "__main__":
     l = points.tolist()
     for item in l:
         print(item/(2*math.pi) % 1)
-
-
-
-
-
-'''
-RETIRED GRADIENT DESCENT WITH HARD CODED GRADIENT ARRAY
-
-def gradient_descent(gradient, start, learn_rate, n_iter = 5, tolerance=1e-08):
-    vector = start
-
-    for _ in range(n_iter):
-        print(gradient(vector))
-        diff = -learn_rate * gradient(vector)
-        print(diff)
-        if np.all(np.abs(diff) <= tolerance):
-            break
-        vector += diff
-    return vector
-
-points = gradient_descent(
-     gradient=lambda t: np.array([np.cos((_check_neg(t[0], t[3]) - t[3])/2) - np.cos((_check_neg(t[1], t[0]) - t[0])/2),
-                                  np.cos((_check_neg(t[1], t[0]) - t[0])/2) - np.cos((_check_neg(t[2], t[1]) - t[1])/2),
-                                  np.cos((_check_neg(t[2], t[1]) - t[1])/2) - np.cos((_check_neg(t[3], t[2]) - t[2])/2),
-                                  np.cos((_check_neg(t[3], t[2]) - t[2])/2) - np.cos((_check_neg(t[0], t[3]) - t[3])/2)
-                                  ]),
-     start=np.array([0.0,math.pi/2.0,math.pi,3*math.pi/2.0]), learn_rate=0.001
-)
-
-l = points.tolist()
-for item in l:
-    print(item/(2*math.pi) % 1)
-
-'''
