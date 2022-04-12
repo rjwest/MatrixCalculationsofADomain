@@ -5,7 +5,6 @@ Created on Thu Feb 24 20:48:14 2022
 @author: Robert
 """
 
-import scipy.integrate as integrate
 import math
 import numpy as np
 import matplotlib.pyplot as plt
