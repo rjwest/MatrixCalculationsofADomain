@@ -77,11 +77,7 @@ def _gradient(t_theta_list, pairs):
     q = len(t_theta_list)
     x_list2, y_list2 = getPoints(pairs, t_theta_list)
 
-    lq = []
-    for k in range(q):
-        lq += [calc_dLq_over_dTheta_k(x_list2, y_list2, t_theta_list, k, pairs)]
-
-    return np.array(lq)
+    return np.array([calc_dLq_over_dTheta_k(x_list2, y_list2, t_theta_list, k, pairs) for k in range(q)])
 
 def gradient_ascent(start, pairs, learn_rate, n_iter = 10000, tolerance=1e-08):
     vector = start
