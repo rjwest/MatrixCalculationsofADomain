@@ -18,6 +18,7 @@ from tangent_parameterization import getPoints
 
 THREADS = 20
 
+# this returns the q-length function
 def _l_of_thetas(x_list, y_list, q):
     summation = 0
     for j in range(q):
@@ -29,6 +30,7 @@ def _l_of_thetas(x_list, y_list, q):
         summation += (math.sqrt((x_list[j_plus_1] - x_list[j])**2 + (y_list[j_plus_1] - y_list[j])**2))
     return summation
 
+# how is this different from the rho function in gradient_descend_model?
 def _rho_of_theta(theta, pairs):
     bs = []
     for pair in pairs:
@@ -40,14 +42,17 @@ def _rho_of_theta(theta, pairs):
         summation += bs[k] * np.cos(k*theta)
     return summation
 
+# This returns the un-normalized Lazutkin parametrization at θ
 def _z_of_theta(theta, pairs):
     return integrate.quad(lambda t,pairs: _rho_of_theta(t, pairs)**(1/3), 0, theta, args=(pairs))[0]
 
-def _e_n(theta, pairs, k, c):
+# This evaluates the k-th Fourier mode at theta
+def  _e_n(theta, pairs, k, c):
     lp = (2*math.pi)/c
 
     return np.cos(k * (lp * _z_of_theta(theta, pairs)))
 
+# this computes the first variation of the q-length with respect to e_k
 def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
     summation = 0
     for j in range(q):
@@ -70,6 +75,7 @@ def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
         summation += _e_n(gradient_thetas[j], pairs, k, c) * np.sin(( alpha_l - gradient_thetas[j]))
     return summation
 
+# this computes all elements of the matrix.
 def gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain):
     theta_list = []
     matrix = np.array([[]])
