@@ -146,12 +146,12 @@ if __name__ == "__main__":
     for n in range(2,N):
         #print(matrix[0:n,0:n])
         inner_matrix = matrix[0:n,0:n]
-        eiganvals = np.linalg.eigvals(inner_matrix)
+        eigenvals = np.linalg.eigvals(inner_matrix)
 
         # extract real part
-        x = [ele.real for ele in eiganvals]
+        x = [ele.real for ele in eigenvals]
         # extract imaginary part
-        y = [ele.imag for ele in eiganvals]
+        y = [ele.imag for ele in eigenvals]
 
         plt.figure()
         plt.xlim(min_x - 0.5, max_x + 0.5)
@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
-        plt.savefig(f'eigans//eigans_{n}.png')
+        plt.savefig(f'eigens//eigens_{n}.png')
         plt.show()
 
         '''
@@ -180,10 +180,10 @@ if __name__ == "__main__":
 
     plt.ylabel('Imaginary')
     plt.xlabel('Real')
-    plt.savefig(f'eigans//eigans_{N}.png')
+    plt.savefig(f'eigens//eigens_{N}.png')
     plt.show()
 
 
 
         #print('')
-        #print(f'eigens: {eiganvals}')
+        #print(f'eigens: {eigenvals}')
