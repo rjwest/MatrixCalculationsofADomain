@@ -39,8 +39,6 @@ def calcYAnalytic(theta, pairs):
 
 def plotPoints(fname):
 
-    x_list = []
-    y_list = []
     pairs = []
 
     with open(fname) as fp:
@@ -51,11 +49,8 @@ def plotPoints(fname):
     ep = math.pi/100
 
     #adding epsilon will add 1 last point which ends up near the beginning point of graph
-    for theta in np.arange(0,(2*math.pi)+ep,ep):
-        x = calcXAnalytic(theta, fname, pairs)
-        y = calcYAnalytic(theta, fname, pairs)
-        x_list += [x]
-        y_list += [y]
+    x_list = [calcXAnalytic(theta , pairs) for theta in np.arange(0,(2*math.pi)+ep,ep)]
+    y_list = [calcYAnalytic(theta , pairs) for theta in np.arange(0,(2*math.pi)+ep,ep)]
 
     print(len(x_list))
     print(f'x list: {x_list}')
@@ -67,17 +62,8 @@ def plotPoints(fname):
 
 def getPoints(pairs, theta_list):
 
-    x_list = []
-    y_list = []
-
-    for theta in theta_list:
-        x = calcXAnalytic(theta, pairs)
-        y = calcYAnalytic(theta, pairs)
-        x_list += [x]
-        y_list += [y]
-
-    return(x_list, y_list)
-
+    return ([calcXAnalytic(theta, pairs) for theta in theta_list],
+            [calcYAnalytic(theta, pairs) for theta in theta_list])
 
 if __name__ == '__main__':
     fname_list = 'coeff1.txt'
