@@ -40,10 +40,6 @@ def calcYAnalytic(theta, pairs):
     b = float(b)
     return a_sum + b_sum + (b * (1 - np.cos(theta)))
 
-
-
-
-
 def plotPoints(fname):
 
     x_list = []
@@ -67,7 +63,6 @@ def plotPoints(fname):
     print(len(x_list))
     print(f'x list: {x_list}')
     print(f'y list: {y_list}')
-
 
     plt.axes().set_aspect('equal')
     #plt.scatter(x_list,y_list)
