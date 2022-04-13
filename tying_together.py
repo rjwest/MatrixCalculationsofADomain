@@ -68,24 +68,22 @@ def gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain):
     theta_list = []
     matrix = np.array([[]])
     non = 0
-    c = integrate.quad(lambda t,pairs: _rho_of_theta(t, pairs)**(1/3), 0, 2*math.pi, args=(pairs))[0]
+    c = _z_of_theta(2*math.pi, pairs)
 
+    # each row is independent on the other rows; these can be computed in separate threads
     for q in range(2, (N+2), 1):
-        theta_list = []
+        # Set up uniform (equispaced) initial conditions for gradient
+        # ascent Note that since the initial condition is symmetric
+        # with respect to 0, so will be the solution.
 
-        #Get gradient thetas for q
-        row = np.array([])
         ep = 2*math.pi/q
-        for theta in np.arange(0,(q*ep),ep):
-            theta_list += [theta]
-
-        #print(q*ep)
-        #print(theta_list)
+        theta_list=[theta for theta in np.arange(0,(q*ep),ep)]
 
         gradient_thetas = gradient_ascent(theta_list, pairs, 0.01)
-        #print(f'grad! {gradient_thetas}')
 
         #Generate each index of a row in the matrix
+
+        row = np.array([])
         for k in range(2, N+2):
             row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs)])
         if non == 0:
