@@ -10,13 +10,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import multiprocessing
 
 from gradient_descent_model import gradient_ascent
 from tangent_parameterization import getPoints
-
-
-THREADS = 20
 
 # this returns the q-length function
 def _l_of_thetas(x_list, y_list, q):
