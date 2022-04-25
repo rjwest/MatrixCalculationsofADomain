@@ -27,34 +27,21 @@ def _rho(pairs, theta_k):
 
 # use more expressive names
 def _calc_part_1(x_list, y_list, theta_list, k):
-    if k == 0:
-        k_minus_1 = len(x_list) - 1
-    else:
-        k_minus_1 = k - 1
+    q = len(x_list)
 
-    if k == len(x_list) - 1:
-        k_plus_1 = 0
-    else:
-        k_plus_1 = k + 1
-
-    return (
-        (((x_list[k] - x_list[k_minus_1]) * np.cos(theta_list[k])) + ((y_list[k] - y_list[k_minus_1]) * np.sin(theta_list[k])))
-            /
-            (math.sqrt((x_list[k] - x_list[k_minus_1])**2 + (y_list[k] - y_list[k_minus_1])**2))
-            )
+    return ((((x_list[k] - x_list[(k-1)%q]) * np.cos(theta_list[k])) +
+             ((y_list[k] - y_list[(k-1)%q]) * np.sin(theta_list[k]))) /
+            (math.sqrt((x_list[k] - x_list[(k-1)%q])**2 +
+                       (y_list[k] - y_list[(k-1)%q])**2)))
 
 # use more expressive names
 def _calc_part_2(x_list, y_list, theta_list, k):
-    if k == len(x_list) - 1:
-        k_plus_1 = 0
-    else:
-        k_plus_1 = k + 1
+    q = len(x_list)
 
-    return (
-        (((x_list[k_plus_1] - x_list[k]) * np.cos(theta_list[k])) + ((y_list[k_plus_1] - y_list[k]) * np.sin(theta_list[k])))
-            /
-            (math.sqrt((x_list[k_plus_1] - x_list[k])**2 + (y_list[k_plus_1] - y_list[k])**2))
-            )
+    return ((((x_list[(k+1)%q] - x_list[k]) * np.cos(theta_list[k])) +
+         ((y_list[(k+1)%q] - y_list[k]) * np.sin(theta_list[k]))) /
+            (math.sqrt((x_list[(k+1)%q] - x_list[k])**2 +
+                       (y_list[(k+1)%q] - y_list[k])**2)))
 
 def calc_dLq_over_dTheta_k(x_list, y_list, theta_list, k, pairs):
     return _rho(pairs, theta_list[k]) * (_calc_part_1(x_list, y_list, theta_list, k) - _calc_part_2(x_list, y_list, theta_list, k))
