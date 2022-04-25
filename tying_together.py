@@ -81,7 +81,7 @@ def gen_matrix_Anq(pairs, N):
         ep = 2*math.pi/q
         theta_list=[theta for theta in np.arange(0,(q*ep),ep)]
 
-        gradient_thetas = gradient_ascent(theta_list, pairs, 0.01)
+        gradient_thetas = gradient_ascent(pairs, theta_list, 0.01)
 
         #Generate each index of a row in the matrix
 

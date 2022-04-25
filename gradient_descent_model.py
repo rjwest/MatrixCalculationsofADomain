@@ -43,7 +43,7 @@ def _calc_part_2(x_list, y_list, theta_list, k):
             (math.sqrt((x_list[(k+1)%q] - x_list[k])**2 +
                        (y_list[(k+1)%q] - y_list[k])**2)))
 
-def calc_dLq_over_dTheta_k(x_list, y_list, theta_list, k, pairs):
+def calc_dLq_over_dTheta_k(pairs, x_list, y_list, theta_list, k):
     return _rho(pairs, theta_list[k]) * (_calc_part_1(x_list, y_list, theta_list, k) - _calc_part_2(x_list, y_list, theta_list, k))
 
 
@@ -70,17 +70,17 @@ Constructs gradient in the form of:
 # Gradient of what?
 #
 # This is the gradient of the q-length function.
-def _gradient(t_theta_list, pairs):
+def _gradient(pairs, t_theta_list):
     q = len(t_theta_list)
     x_list2, y_list2 = getPoints(pairs, t_theta_list)
 
-    return np.array([calc_dLq_over_dTheta_k(x_list2, y_list2, t_theta_list, k, pairs) for k in range(q)])
+    return np.array([calc_dLq_over_dTheta_k(pairs, x_list2, y_list2, t_theta_list, k) for k in range(q)])
 
-def gradient_ascent(initial_condition, pairs, learn_rate, n_iter = 10000, tolerance=1e-08):
+def gradient_ascent(pairs, initial_condition, learn_rate, n_iter = 10000, tolerance=1e-08):
     vector = initial_condition
 
     for i in range(n_iter):
-        diff = _gradient(vector, pairs)
+        diff = _gradient(pairs, vector)
         if np.all(np.abs(diff) <= tolerance):
             break
         vector += diff * learn_rate
