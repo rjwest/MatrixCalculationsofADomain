@@ -14,6 +14,8 @@ import time
 from gradient_descent_model import gradient_ascent
 from tangent_parameterization import getPoints
 
+from domain import Domain
+
 # this returns the q-length function
 def _l_of_thetas(x_list, y_list, q):
     summation = 0
@@ -64,7 +66,7 @@ def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
     return summation
 
 # this computes all elements of the matrix.
-def gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain):
+def gen_matrix_Anq(pairs, N):
     theta_list = []
     matrix = np.array([[]])
     non = 0
@@ -98,29 +100,24 @@ def gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain):
 
 if __name__ == "__main__":
 
-    fname = 'coeff1.txt'
-    theta_list_domain = []
-    pairs = []
 
 
     #BUILD THE ORIGINAL DOMAIN
+    d = Domain('coeff1.txt')
+
+    print(d.pairs)
+
     orig_q = 201
     orig_ep = 2*math.pi/orig_q
-    with open(fname) as fp:
-        for line in fp:
-            line = line.strip()
-            pairs = line.split('~')
+    theta_list_domain = [theta for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep)]
 
-    for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep):
-        theta_list_domain += [theta]
-
-    x_list_domain, y_list_domain = getPoints(pairs, theta_list_domain)
+    x_list_domain, y_list_domain = getPoints(d.pairs, theta_list_domain)
 
     #plt.axes().set_aspect('equal')
     #plt.plot(x_list_domain,y_list_domain)
 
     N = 200
-    matrix = gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain)
+    matrix = gen_matrix_Anq(d.pairs, N)
 
     temp = np.linalg.eigvals(matrix)
     x_list = [ele.real for ele in temp]
