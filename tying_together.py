@@ -18,8 +18,8 @@ from tangent_parameterization import getPoints
 def _l_of_thetas(x_list, y_list, q):
     summation = 0
     for j in range(q):
-        summation += (math.sqrt((x_list[j+1 % q] - x_list[j])**2 +
-                                (y_list[j+1 % q] - y_list[j])**2))
+        summation += (math.sqrt((x_list[(j+1) % q] - x_list[j])**2 +
+                                (y_list[(j+1) % q] - y_list[j])**2))
     return summation
 
 # how is this different from the rho function in gradient_descend_model?
@@ -49,7 +49,7 @@ def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
     summation = 0
     for j in range(q):
         # change names for x_list and y_list below
-        x_list,y_list = getPoints(pairs, [gradient_thetas[j], gradient_thetas[j + 1 % q]])
+        x_list,y_list = getPoints(pairs, [gradient_thetas[j], gradient_thetas[(j + 1) % q]])
 
         alpha_l = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
 
