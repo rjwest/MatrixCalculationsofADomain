@@ -80,7 +80,6 @@ def gradient_ascent(initial_condition, pairs, learn_rate, n_iter = 10000, tolera
     vector = initial_condition
 
     for i in range(n_iter):
-        #print(_gradient(vector))
         diff = _gradient(vector, pairs)
         if np.all(np.abs(diff) <= tolerance):
             break
