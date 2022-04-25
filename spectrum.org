@@ -17,12 +17,24 @@ domain.
 #+end_src
 
 The constructor of the class loads a file and parses its content.
-The file –for now– is one line of tilde-separated list of pairs a,b
+The file –for now– is one line of tilde-separated list of pairs a,b,
+where
+
+- $a$ is the list of coefficients of the $sin$ Fourier modes of the
+  curvature radius
+- $b$ is the list of coefficients of the $cos$ Fourier modes of the
+  curvature radius
+
+In other words, the curvature radius $ρ$ as a function of the tangent
+angle $θ$ is given by:
+
+$$ ρ(θ) = \sum_{k=0}^∞ a_k \sin(kθ) + b_k \cos(kθ) $$
 
 ** TODO Modify the code to accept a json file, instead
 
 It would be then easy to store (cache) further information about the
  domain should we want to.
+
 
 #+begin_src python
   class Domain:
