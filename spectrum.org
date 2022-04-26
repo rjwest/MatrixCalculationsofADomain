@@ -1,3 +1,4 @@
+# -*- org-src-preserve-indentation: t -*-
 #+title: The spectrum of Linearized Isospectral operators
 #+author: Jacopo De Simoi + Robert Westhaver
 
@@ -11,9 +12,9 @@ In this section we create the ~Domain~ class, which will be
 responsible for containing and processing information about each
 domain.
 #+begin_src python
-  import math
-  import numpy as np
-  import matplotlib.pyplot as plt
+import math
+import numpy as np
+import matplotlib.pyplot as plt
 #+end_src
 
 The constructor of the class loads a file and parses its content.
@@ -30,18 +31,28 @@ angle $θ$ is given by:
 
 $$ ρ(θ) = \sum_{k=0}^∞ a_k \sin(kθ) + b_k \cos(kθ) $$
 
-** TODO Modify the code to accept a json file, instead
+#+begin_src python
+class Domain:
+    def __init__(self, fname):
+        with open(fname) as fp:
+            for line in fp:
+                line = line.strip()
+                self.pairs = line.split('~')
+                self.ρ_Fourier_coefficients = [list(map(float,pair.split(','))) for pair in self.pairs]
+#+end_src
+
+- TODO Modify the code to accept a json file, instead
 
 It would be then easy to store (cache) further information about the
  domain should we want to.
 
-
+Now we define a method to return the curvature function
 #+begin_src python
-  class Domain:
-      def __init__(self, fname):
-          with open(fname) as fp:
-              for line in fp:
-                  line = line.strip()
-                  self.pairs = line.split('~')
-
+    def ρ(self,θ):
+        pt = 0
+        n = 0
+        for a,b in self.ρ_Fourier_coefficients:
+            pt += ((a * np.sin(n*θ)) + (b * np.cos(n*θ)))
+            n += 1
+        return pt
 #+end_src
