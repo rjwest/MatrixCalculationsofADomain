@@ -84,12 +84,12 @@ def gen_matrix_Anq(d, N):
         gradient_thetas = gradient_ascent(d, theta_list, 0.01)
 
         #Generate each index of a row in the matrix
-
+        partial = time.time()
         row = np.array([])
         for k in range(2, N+2):
             row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, d.pairs)])
         end = time.time()
-        print(f'Row {q-1} computed in {end-start}s')
+        print(f'{q}-periodic orbit found in {partial-start}s, Row {q-1} computed in {end-partial}s')
         if non == 0:
             matrix = [row]
             non = 1
