@@ -60,31 +60,31 @@ Now we define a method to return the curvature function
 And we define a method γ to return the point parametrized by θ:
 #+begin_src python
     def γ(self, θ):
-        x_a_sum = 0
-        x_b_sum = 0
-        y_a_sum = 0
-        y_b_sum = 0
+        x = self.ρ_Fourier_coefficients[0][1] * np.sin(θ)
+        y = self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))
+
         for k in range(2, len(self.ρ_Fourier_coefficients),1):
             a,b = self.ρ_Fourier_coefficients[k]
-            x_a_sum += (a/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) + ((1 - (np.cos((k - 1)*θ))) / (k - 1)))
-            x_b_sum += (b/2) * (((np.sin((k+1)*θ)) / (k + 1)) + ((np.sin((k - 1)*θ)) / (k - 1)))
-            y_a_sum += (a/2) * (-(((np.sin((k+1)*θ))) / (k + 1)) + (((np.sin((k - 1)*θ))) / (k - 1)))
-            y_b_sum += (b/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) + (((np.cos((k - 1)*θ)) - 1) / (k - 1)))
-        x= x_a_sum + x_b_sum + (self.ρ_Fourier_coefficients[0][1] * np.sin(θ))
-        y= y_a_sum + y_b_sum + (self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))
-)
+            x += ((a/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) +
+                           ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
+                  (b/2) * (((np.sin((k+1)*θ)) / (k + 1)) +
+                           ((np.sin((k - 1)*θ)) / (k - 1))))
+            y += ((a/2) * (-((np.sin((k+1)*θ)) / (k + 1)) +
+                           ((np.sin((k - 1)*θ)) / (k - 1))) +
+                  (b/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) +
+                           (((np.cos((k - 1)*θ)) - 1) / (k - 1))))
         return x,y
 #+end_src
 
 Now, just for fun, we add a method for plotting the domain
 #+begin_src python
     def plot(self):
-        ep = math.pi/100
+        ε = math.pi/100
 
         #adding epsilon will add 1 last point which ends up near the beginning point of graph
-        γ_list = [ γ(self, theta) for theta in np.arange(0,(2*math.pi)+ep,ep)]
+        γ_list = [ self.γ(θ) for θ in np.arange(0,(2*math.pi)+ε , ε)]
         plt.axes().set_aspect('equal')
-        plt.plot(list(zip(*γ_list))
+        x_l,y_l=list(zip(*γ_list))
+        plt.plot(x_l,y_l)
         plt.show()
-
 #+end_src
