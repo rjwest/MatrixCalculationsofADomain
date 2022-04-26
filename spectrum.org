@@ -108,3 +108,10 @@ optimize the choice of initial conditions.
 
     # implement inverse lazutkin
 #+end_src
+
+* Gradient ascent routines
+:properties:
+:header-args: :tangle gradient_ascent.py
+:end:
+
+** TODO import methods from .py file
