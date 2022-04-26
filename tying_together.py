@@ -5,7 +5,6 @@ Created on Mon Mar 12 19:14:43 2022
 @author: Robert
 """
 
-import scipy.integrate as integrate
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,42 +15,18 @@ from tangent_parameterization import getPoints
 
 from domain import Domain
 
-# this returns the q-length function
-def _l_of_thetas(x_list, y_list, q):
-    summation = 0
-    for j in range(q):
-        summation += (math.sqrt((x_list[(j+1) % q] - x_list[j])**2 +
-                                (y_list[(j+1) % q] - y_list[j])**2))
-    return summation
-
-# how is this different from the rho function in gradient_descend_model?
-def _rho_of_theta(theta, pairs):
-    bs = []
-    for pair in pairs:
-        a,b = pair.split(',')
-        a = float(a)
-        bs += [float(b)]
-    summation = 0
-    for k in range(len(pairs)):
-        summation += bs[k] * np.cos(k*theta)
-    return summation
-
-# This returns the un-normalized Lazutkin parametrization at θ
-def _z_of_theta(theta, pairs):
-    return integrate.quad(lambda t,pairs: _rho_of_theta(t, pairs)**(1/3), 0, theta, args=(pairs))[0]
-
 # This evaluates the k-th Fourier mode at theta
-def  _e_n(theta, pairs, k, c):
-    lp = (2*math.pi)/c
-
-    return np.cos(k * (lp * _z_of_theta(theta, pairs)))
+def  _e_n(theta, d, k):
+    lp = (2*math.pi)
+    return np.cos(k * (lp * d.Lazutkin(theta)))
 
 # this computes the first variation of the q-length with respect to e_k
-def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
+def _fetch_val_matrix_Anq(gradient_thetas, k, q, d):
     summation = 0
     for j in range(q):
+        # also this can be optimized: each point is computed twice.
         # change names for x_list and y_list below
-        x_list,y_list = getPoints(pairs, [gradient_thetas[j], gradient_thetas[(j + 1) % q]])
+        x_list,y_list = getPoints(d.pairs, [gradient_thetas[j], gradient_thetas[(j + 1) % q]])
 
         alpha_l = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
 
@@ -62,7 +37,7 @@ def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
 
         #print(f'Argument of sine: {(alpha_l - gradient_thetas[j])/(2*math.pi)}\n j is: {j}\n q is: {q}')
         #print(f'alpha is: {alpha_l}\n Gradient theta is: {gradient_thetas[j]}')
-        summation += _e_n(gradient_thetas[j], pairs, k, c) * np.sin(( alpha_l - gradient_thetas[j]))
+        summation += _e_n(gradient_thetas[j], d, k) * np.sin(( alpha_l - gradient_thetas[j]))
     return summation
 
 # this computes all elements of the matrix.
@@ -70,7 +45,6 @@ def gen_matrix_Anq(d, N):
     theta_list = []
     matrix = np.array([[]])
     non = 0
-    c = _z_of_theta(2*math.pi, d.pairs)
 
     # each row is independent on the other rows; these can be computed in separate threads
     for q in range(2, (N+2), 1):
@@ -87,7 +61,7 @@ def gen_matrix_Anq(d, N):
         partial = time.time()
         row = np.array([])
         for k in range(2, N+2):
-            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, d.pairs)])
+            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, q, d)])
         end = time.time()
         print(f'{q}-periodic orbit found in {partial-start}s, Row {q-1} computed in {end-partial}s')
         if non == 0:
