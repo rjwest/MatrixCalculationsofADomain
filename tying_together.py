@@ -66,11 +66,11 @@ def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
     return summation
 
 # this computes all elements of the matrix.
-def gen_matrix_Anq(pairs, N):
+def gen_matrix_Anq(d, N):
     theta_list = []
     matrix = np.array([[]])
     non = 0
-    c = _z_of_theta(2*math.pi, pairs)
+    c = _z_of_theta(2*math.pi, d.pairs)
 
     # each row is independent on the other rows; these can be computed in separate threads
     for q in range(2, (N+2), 1):
@@ -81,13 +81,13 @@ def gen_matrix_Anq(pairs, N):
         ep = 2*math.pi/q
         theta_list=[theta for theta in np.arange(0,(q*ep),ep)]
 
-        gradient_thetas = gradient_ascent(pairs, theta_list, 0.01)
+        gradient_thetas = gradient_ascent(d, theta_list, 0.01)
 
         #Generate each index of a row in the matrix
 
         row = np.array([])
         for k in range(2, N+2):
-            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs)])
+            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, d.pairs)])
         end = time.time()
         print(f'Row {q-1} computed in {end-start}s')
         if non == 0:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     #plt.plot(x_list_domain,y_list_domain)
 
     N = 200
-    matrix = gen_matrix_Anq(d.pairs, N)
+    matrix = gen_matrix_Anq(d, N)
 
     temp = np.linalg.eigvals(matrix)
     x_list = [ele.real for ele in temp]

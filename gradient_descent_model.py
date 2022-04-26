@@ -11,40 +11,26 @@ import matplotlib.pyplot as plt
 import time
 from tangent_parameterization import getPoints
 
-# essentially all of this will belong to the Domain class;
+# use more expressive names
+def _calc_part_1(p_list, θ, k):
+    q = len(p_list)
 
-# move to the domain class
-def _rho(pairs, theta_k):
-    pt = 0
-    n = 0
-    for pair in pairs:
-        a,b = pair.split(',')
-        a = float(a)
-        b= float(b)
-        pt += ((a * np.sin(n*theta_k)) + (b * np.cos(n*theta_k)))
-        n += 1
-    return pt
+    return ((((p_list[k][0] - p_list[(k-1)%q][0]) * np.cos(θ[k])) +
+             ((p_list[k][1] - p_list[(k-1)%q][1]) * np.sin(θ[k]))) /
+            (math.sqrt((p_list[k][0] - p_list[(k-1)%q][0])**2 +
+                       (p_list[k][1] - p_list[(k-1)%q][1])**2)))
 
 # use more expressive names
-def _calc_part_1(x_list, y_list, theta_list, k):
-    q = len(x_list)
+def _calc_part_2(p_list, θ, k):
+    q = len(p_list)
 
-    return ((((x_list[k] - x_list[(k-1)%q]) * np.cos(theta_list[k])) +
-             ((y_list[k] - y_list[(k-1)%q]) * np.sin(theta_list[k]))) /
-            (math.sqrt((x_list[k] - x_list[(k-1)%q])**2 +
-                       (y_list[k] - y_list[(k-1)%q])**2)))
+    return ((((p_list[(k+1)%q][0] - p_list[k][0]) * np.cos(θ[k])) +
+             ((p_list[(k+1)%q][1] - p_list[k][1]) * np.sin(θ[k]))) /
+            (math.sqrt((p_list[(k+1)%q][0] - p_list[k][0])**2 +
+                       (p_list[(k+1)%q][1] - p_list[k][1])**2)))
 
-# use more expressive names
-def _calc_part_2(x_list, y_list, theta_list, k):
-    q = len(x_list)
-
-    return ((((x_list[(k+1)%q] - x_list[k]) * np.cos(theta_list[k])) +
-         ((y_list[(k+1)%q] - y_list[k]) * np.sin(theta_list[k]))) /
-            (math.sqrt((x_list[(k+1)%q] - x_list[k])**2 +
-                       (y_list[(k+1)%q] - y_list[k])**2)))
-
-def calc_dLq_over_dTheta_k(pairs, x_list, y_list, theta_list, k):
-    return _rho(pairs, theta_list[k]) * (_calc_part_1(x_list, y_list, theta_list, k) - _calc_part_2(x_list, y_list, theta_list, k))
+def calc_dLq_over_dTheta_k(d, p_list, θ, k):
+    return d.ρ(θ[k]) * (_calc_part_1(p_list, θ, k) - _calc_part_2(p_list, θ, k))
 
 
 def _check_neg(point1, point2):
@@ -70,17 +56,17 @@ Constructs gradient in the form of:
 # Gradient of what?
 #
 # This is the gradient of the q-length function.
-def _gradient(pairs, t_theta_list):
-    q = len(t_theta_list)
-    x_list2, y_list2 = getPoints(pairs, t_theta_list)
+def _gradient(d, θ):
+    q = len(θ)
+    p_list = list(map(d.γ, θ))
 
-    return np.array([calc_dLq_over_dTheta_k(pairs, x_list2, y_list2, t_theta_list, k) for k in range(q)])
+    return np.array([calc_dLq_over_dTheta_k(d, p_list, θ, k) for k in range(q)])
 
-def gradient_ascent(pairs, initial_condition, learn_rate, n_iter = 10000, tolerance=1e-08):
+def gradient_ascent(d, initial_condition, learn_rate, n_iter = 10000, tolerance=1e-08):
     vector = initial_condition
 
     for i in range(n_iter):
-        diff = _gradient(pairs, vector)
+        diff = _gradient(d, vector)
         if np.all(np.abs(diff) <= tolerance):
             break
         vector += diff * learn_rate
