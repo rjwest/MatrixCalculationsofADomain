@@ -65,13 +65,13 @@ And we define a method γ to return the point parametrized by θ:
 
         for k in range(2, len(self.ρ_Fourier_coefficients),1):
             a,b = self.ρ_Fourier_coefficients[k]
-            x += ((a/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) +
+            x += ((a/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                            ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
-                  (b/2) * (((np.sin((k+1)*θ)) / (k + 1)) +
+                  (b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
                            ((np.sin((k - 1)*θ)) / (k - 1))))
-            y += ((a/2) * (-((np.sin((k+1)*θ)) / (k + 1)) +
-                           ((np.sin((k - 1)*θ)) / (k - 1))) +
-                  (b/2) * (((1 - (np.cos((k+1)*θ))) / (k + 1)) +
+            y += ((a/2) * (-((np.sin((k + 1)*θ)) / (k + 1)) +
+                            ((np.sin((k - 1)*θ)) / (k - 1))) +
+                  (b/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                            (((np.cos((k - 1)*θ)) - 1) / (k - 1))))
         return x,y
 #+end_src
