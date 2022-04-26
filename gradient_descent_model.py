@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import time
 from tangent_parameterization import getPoints
 
-def calc_dLq_over_dTheta_k(d, p, θ, k):
+def calc_dLq_in_dTheta_k(d, p, θ, k):
     q = len(p)
 
     Δx0 = (p[k][0] - p[(k-1)%q][0])
@@ -50,11 +50,14 @@ Constructs gradient in the form of:
 # Gradient of what?
 #
 # This is the gradient of the q-length function.
+
+# TODO: we can still
+# optimize by perhaps a factor 2 by re-using the displacements.  At the moment they are computed twice (once for each adjacent vertex.)
 def _gradient(d, θ):
     q = len(θ)
     p_list = list(map(d.γ, θ))
 
-    return np.array([calc_dLq_over_dTheta_k(d, p_list, θ, k) for k in range(q)])
+    return np.array([calc_dLq_in_dTheta_k(d, p_list, θ, k) for k in range(q)])
 
 def gradient_ascent(d, initial_condition, learn_rate, n_iter = 10000, tolerance=1e-08):
     vector = initial_condition
