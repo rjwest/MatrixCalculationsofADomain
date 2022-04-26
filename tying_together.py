@@ -15,29 +15,23 @@ from tangent_parameterization import getPoints
 
 from domain import Domain
 
-# This evaluates the k-th Fourier mode at theta
-def  _e_n(theta, d, k):
+
+# This evaluates the k-th Fourier mode at θ
+def  _e_n(θ, d, k):
     lp = (2*math.pi)
-    return np.cos(k * (lp * d.Lazutkin(theta)))
+    return np.cos(k * (lp * d.Lazutkin(θ)))
 
 # this computes the first variation of the q-length with respect to e_k
-def _fetch_val_matrix_Anq(gradient_thetas, k, q, d):
+def _fetch_val_matrix_Anq(d,Θ, k, q):
     summation = 0
     for j in range(q):
         # also this can be optimized: each point is computed twice.
         # change names for x_list and y_list below
-        x_list,y_list = getPoints(d.pairs, [gradient_thetas[j], gradient_thetas[(j + 1) % q]])
+        x_list,y_list = getPoints(d.pairs, [Θ[j], Θ[(j + 1) % q]])
 
-        alpha_l = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
+        α_j = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
 
-#        if alpha_l < 0:
-#            alpha_l += 2*math.pi
-
-        plt.plot(x_list,y_list)
-
-        #print(f'Argument of sine: {(alpha_l - gradient_thetas[j])/(2*math.pi)}\n j is: {j}\n q is: {q}')
-        #print(f'alpha is: {alpha_l}\n Gradient theta is: {gradient_thetas[j]}')
-        summation += _e_n(gradient_thetas[j], d, k) * np.sin(( alpha_l - gradient_thetas[j]))
+        summation += _e_n(Θ[j], d, k) * np.sin(( α_j - Θ[j]))
     return summation
 
 # this computes all elements of the matrix.
@@ -46,22 +40,27 @@ def gen_matrix_Anq(d, N):
     matrix = np.array([[]])
     non = 0
 
-    # each row is independent on the other rows; these can be computed in separate threads
+    # each row is independent on the other rows; each could be computed
+    # in a separate thread
     for q in range(2, (N+2), 1):
         # Set up uniform (equispaced) initial conditions for gradient
         # ascent Note that since the initial condition is symmetric
         # with respect to 0, so will be the solution.
         start = time.time()
-        ep = 2*math.pi/q
-        theta_list=[theta for theta in np.arange(0,(q*ep),ep)]
 
-        gradient_thetas = gradient_ascent(d, theta_list, 0.01)
+        # guess initial conditions to be equispaced
+
+        # TODO: this is the main bottleneck; they should be equispaced
+        # in Lazutkin, not in θ
+        Δ = 2*math.pi/q
+        θ_guess=[θ for θ in np.arange(0,(q*Δ),Δ)]
+
+        # find the orbit of rotation number 1/q
+        Θ = gradient_ascent(d, θ_guess, 0.01)
 
         #Generate each index of a row in the matrix
         partial = time.time()
-        row = np.array([])
-        for k in range(2, N+2):
-            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, q, d)])
+        row = np.array([_fetch_val_matrix_Anq(d, Θ, k, q) for k in range(2, N+2)])
         end = time.time()
         print(f'{q}-periodic orbit found in {partial-start}s, Row {q-1} computed in {end-partial}s')
         if non == 0:
