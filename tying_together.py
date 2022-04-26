@@ -77,7 +77,7 @@ def gen_matrix_Anq(pairs, N):
         # Set up uniform (equispaced) initial conditions for gradient
         # ascent Note that since the initial condition is symmetric
         # with respect to 0, so will be the solution.
-
+        start = time.time()
         ep = 2*math.pi/q
         theta_list=[theta for theta in np.arange(0,(q*ep),ep)]
 
@@ -88,13 +88,13 @@ def gen_matrix_Anq(pairs, N):
         row = np.array([])
         for k in range(2, N+2):
             row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs)])
+        end = time.time()
+        print(f'Row {q-1} computed in {end-start}s')
         if non == 0:
             matrix = [row]
             non = 1
-            print(f'Row {q-1} computed')
         else:
             matrix = np.append(matrix, [row], axis=0)
-            print(f'Row {q-1} computed')
 
     return matrix
 
