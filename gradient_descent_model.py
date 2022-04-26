@@ -11,27 +11,21 @@ import matplotlib.pyplot as plt
 import time
 from tangent_parameterization import getPoints
 
-# use more expressive names
-def _calc_part_1(p_list, θ, k):
-    q = len(p_list)
+def calc_dLq_over_dTheta_k(d, p, θ, k):
+    q = len(p)
 
-    return ((((p_list[k][0] - p_list[(k-1)%q][0]) * np.cos(θ[k])) +
-             ((p_list[k][1] - p_list[(k-1)%q][1]) * np.sin(θ[k]))) /
-            (math.sqrt((p_list[k][0] - p_list[(k-1)%q][0])**2 +
-                       (p_list[k][1] - p_list[(k-1)%q][1])**2)))
+    Δx0 = (p[k][0] - p[(k-1)%q][0])
+    Δy0 = (p[k][1] - p[(k-1)%q][1])
+    ℓ0 = math.sqrt(Δx0**2+Δy0**2)
 
-# use more expressive names
-def _calc_part_2(p_list, θ, k):
-    q = len(p_list)
+    Δx1 = (p[(k+1)%q][0] - p[k][0])
+    Δy1 = (p[(k+1)%q][1] - p[k][1])
+    ℓ1 = math.sqrt(Δx1**2+Δy1**2)
 
-    return ((((p_list[(k+1)%q][0] - p_list[k][0]) * np.cos(θ[k])) +
-             ((p_list[(k+1)%q][1] - p_list[k][1]) * np.sin(θ[k]))) /
-            (math.sqrt((p_list[(k+1)%q][0] - p_list[k][0])**2 +
-                       (p_list[(k+1)%q][1] - p_list[k][1])**2)))
+    cosθ = np.cos(θ[k])
+    sinθ = np.sin(θ[k])
 
-def calc_dLq_over_dTheta_k(d, p_list, θ, k):
-    return d.ρ(θ[k]) * (_calc_part_1(p_list, θ, k) - _calc_part_2(p_list, θ, k))
-
+    return d.ρ(θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 - (Δx1*cosθ+Δy1*sinθ)/ℓ1)
 
 def _check_neg(point1, point2):
     if point1 - point2 < 0:
