@@ -76,3 +76,15 @@ And we define a method γ to return the point parametrized by θ:
         return x,y
 #+end_src
 
+Now, just for fun, we add a method for plotting the domain
+#+begin_src python
+    def plot(self):
+        ep = math.pi/100
+
+        #adding epsilon will add 1 last point which ends up near the beginning point of graph
+        γ_list = [ γ(self, theta) for theta in np.arange(0,(2*math.pi)+ep,ep)]
+        plt.axes().set_aspect('equal')
+        plt.plot(list(zip(*γ_list))
+        plt.show()
+
+#+end_src
