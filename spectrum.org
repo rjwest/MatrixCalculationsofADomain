@@ -80,6 +80,22 @@ And we define a method γ to return the point parametrized by θ:
         return x,y
 #+end_src
 
+We then define the L method, which returns the length of the polygon
+inscribed in the domain whose vertices are identified by the list of
+θ's given as parameter:
+
+#+begin_src python
+    # this returns the q-length function
+    def L(self, θ):
+        summation = 0
+        q=len(θ)
+        p=list(map(self.γ,θ))
+        for j in range(q):
+            summation += (math.sqrt((p[(j+1) % q][0] - p[j][0])**2 +
+                                    (p[(j+1) % q][1] - p[j][1])**2))
+        return summation
+#+end_src
+
 Now, just for fun, we add a method for plotting the domain
 #+begin_src python
     def plot(self):
