@@ -15,18 +15,21 @@ from tangent_parameterization import getPoints
 
 from domain import Domain
 
-# this computes the first variation of the q-length with respect to e_k
-def _fetch_val_matrix_Anq(d,Θ, k, q):
-    summation = 0
-    for j in range(q):
-        # also this can be optimized: each point is computed twice.
-        # change names for x_list and y_list below
-        x_list,y_list = getPoints(d.pairs, [Θ[j], Θ[(j + 1) % q]])
+# this computes the row of first variations of the length of the
+# orbits with respect to the Fourier modes
 
-        α_j = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
+def _fetch_row_matrix_Anq(d, θ, N):
+    # q is implied by the length of θ
+    # Cache the Lazutkin coordinates of the orbit once and for all
+    x=list(map(d.Lazutkin,θ))
 
-        summation += d.e_k(Θ[j], k) * np.sin(( α_j - Θ[j]))
-    return summation
+    # Cache the angles φ_j
+    p=list(map(d.γ,θ))
+    q=len(θ)
+
+    sinφ=[np.sin(np.arctan2(p[(j+1)%q][1]-p[j][1],p[(j+1)%q][0]-p[j][0])-θ[j]) for j in range(q)]
+
+    return [sum([ np.cos(2*math.pi*k * x[j])*sinφ[j] for j in range(q)])  for k in range(2, (N+2))]
 
 # this computes all elements of the matrix.
 def gen_matrix_Anq(d, N):
@@ -50,8 +53,9 @@ def gen_matrix_Anq(d, N):
 
         #Generate each index of a row in the matrix
         partial = time.time()
-        row = np.array([_fetch_val_matrix_Anq(d, Θ, k, q) for k in range(2, N+2)])
+        row = _fetch_row_matrix_Anq(d,Θ,N)
         end = time.time()
+
         print(f'{q}-periodic orbit found in {partial-start}s, Row {q-1} computed in {end-partial}s')
         if non == 0:
             matrix = [row]
