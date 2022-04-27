@@ -48,12 +48,8 @@ def gen_matrix_Anq(d, N):
         # with respect to 0, so will be the solution.
         start = time.time()
 
-        # guess initial conditions to be equispaced
-
-        # TODO: this is the main bottleneck; they should be equispaced
-        # in Lazutkin, not in θ
-        Δ = 2*math.pi/q
-        θ_guess=[θ for θ in np.arange(0,(q*Δ),Δ)]
+        # guess initial conditions to be equispaced in Lazutkin coords
+        θ_guess=[d.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
 
         # find the orbit of rotation number 1/q
         Θ = gradient_ascent(d, θ_guess, 0.01)
