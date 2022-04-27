@@ -15,12 +15,6 @@ from tangent_parameterization import getPoints
 
 from domain import Domain
 
-
-# This evaluates the k-th Fourier mode at θ
-def  _e_n(θ, d, k):
-    lp = (2*math.pi)
-    return np.cos(k * (lp * d.Lazutkin(θ)))
-
 # this computes the first variation of the q-length with respect to e_k
 def _fetch_val_matrix_Anq(d,Θ, k, q):
     summation = 0
@@ -31,7 +25,7 @@ def _fetch_val_matrix_Anq(d,Θ, k, q):
 
         α_j = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
 
-        summation += _e_n(Θ[j], d, k) * np.sin(( α_j - Θ[j]))
+        summation += d.e_k(Θ[j], k) * np.sin(( α_j - Θ[j]))
     return summation
 
 # this computes all elements of the matrix.

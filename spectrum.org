@@ -96,6 +96,13 @@ inscribed in the domain whose vertices are identified by the list of
         return summation
 #+end_src
 
+This method evaluates the k-th (even) Fourier mode at θ
+#+begin_src python
+    # This evaluates the k-th Fourier mode at θ
+    def  e_k(self, θ, k):
+        return np.cos(k * (2 * math.pi * self.Lazutkin(θ)))
+#+end_src
+
 Now, just for fun, we add a method for plotting the domain
 #+begin_src python
     def plot(self):
