@@ -15,7 +15,8 @@ domain.
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy as sp
+from scipy import optimize as optimize
+from scipy import integrate as integrate
 #+end_src
 
 The constructor of the class loads a file and parses its content.
@@ -101,12 +102,17 @@ optimize the choice of initial conditions.
 #+begin_src python
     def raw_Lazutkin(self,θ):
         # This returns the un-normalized Lazutkin parametrization at θ
-        return sp.integrate.quad(lambda t: self.ρ(t)**(1/3), 0, θ)[0]
+        return integrate.quad(lambda t: self.ρ(t)**(1/3), 0, θ)[0]
 
     def Lazutkin(self,θ):
         return self.raw_Lazutkin(θ)/self.Lazutkin_perimeter;
 
     # implement inverse lazutkin
+    def inverse_Lazutkin(self, x):
+        return optimize.newton(
+            lambda t: self.Lazutkin(t)-x,
+            2*math.pi*x,
+            lambda t: (self.ρ(t)**(1/3)/self.Lazutkin_perimeter))
 #+end_src
 
 * Gradient ascent routines
