@@ -10,6 +10,7 @@ import math
 import matplotlib.pyplot as plt
 import time
 from tangent_parameterization import getPoints
+from scipy import optimize as optimize
 
 def calc_dLq_in_dTheta_k(d, p, θ, k):
     q = len(p)
@@ -59,12 +60,10 @@ def _gradient(d, θ):
 
     return np.array([calc_dLq_in_dTheta_k(d, p_list, θ, k) for k in range(q)])
 
-def gradient_ascent(d, initial_condition, learn_rate, n_iter = 10000, tolerance=1e-08):
-    vector = initial_condition
-
-    for i in range(n_iter):
-        diff = _gradient(d, vector)
-        if np.all(np.abs(diff) <= tolerance):
-            break
-        vector += diff * learn_rate
-    return vector
+def gradient_ascent(d, initial_condition, n_iter = 10000, tolerance=1e-08):
+    return optimize.fmin_cg(lambda θ:-d.L(θ),
+                            initial_condition,
+                            lambda θ:-_gradient(d,θ),
+                            maxiter = n_iter,
+                            gtol = tolerance,
+                            disp = False)
