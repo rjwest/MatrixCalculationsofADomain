@@ -16,9 +16,12 @@ from tangent_parameterization import getPoints
 from domain import Domain
 
 # this computes the row of first variations of the length of the
-# orbits with respect to the Fourier modes
+# orbits with respect to the Fourier modes.  This method takes an
+# optional flag for normalization; if it is set to True, the matrix
+# rows will be normalized in such a way that would yield 1 on the
+# diagonal for the disk
 
-def _fetch_row_matrix_Anq(d, θ, N):
+def _fetch_row_matrix_Anq(d, θ, N, normalize = False):
     # q is implied by the length of θ
     # Cache the Lazutkin coordinates of the orbit once and for all
     x=list(map(d.Lazutkin,θ))
@@ -27,9 +30,18 @@ def _fetch_row_matrix_Anq(d, θ, N):
     p=list(map(d.γ,θ))
     q=len(θ)
 
-    sinφ=[np.sin(np.arctan2(p[(j+1)%q][1]-p[j][1],p[(j+1)%q][0]-p[j][0])-θ[j]) for j in range(q)]
+    sinφ=[np.sin(np.arctan2(p[(j+1)%q][1] - p[j][1]
+                            ,p[(j+1)%q][0] - p[j][0])-θ[j])
+          for j in range(q)]
 
-    return [sum([ np.cos(2*math.pi*k * x[j])*sinφ[j] for j in range(q)])  for k in range(2, (N+2))]
+    if (normalize):
+        normalization = 1/sum([ sinφ[j] for j in range(q)])
+    else:
+        normalization = 1;
+
+    return [sum([ np.cos(2*math.pi*k * x[j])*sinφ[j]*normalization
+                  for j in range(q)])
+            for k in range(2, (N+2))]
 
 # this computes all elements of the matrix.
 def gen_matrix_Anq(d, N):
