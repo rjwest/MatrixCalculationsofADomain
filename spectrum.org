@@ -149,6 +149,36 @@ inscribed in the domain whose vertices are identified by the list of
         return summation
 #+end_src
 
+Define the gradient of the L function
+#+begin_src python
+    def _calc_dLq_in_dθ(self, p, θ, k):
+        q = len(p)
+
+        Δx0 = (p[k][0] - p[(k-1)%q][0])
+        Δy0 = (p[k][1] - p[(k-1)%q][1])
+        ℓ0 = math.sqrt(Δx0**2+Δy0**2)
+
+        Δx1 = (p[(k+1)%q][0] - p[k][0])
+        Δy1 = (p[(k+1)%q][1] - p[k][1])
+        ℓ1 = math.sqrt(Δx1**2+Δy1**2)
+
+        cosθ = np.cos(θ[k])
+        sinθ = np.sin(θ[k])
+
+        return d.ρ(θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 - (Δx1*cosθ+Δy1*sinθ)/ℓ1)
+
+    # This is the gradient of the q-length function.
+
+    # TODO: we can still
+    # optimize by perhaps a factor 2 by re-using the displacements.  At the moment they are computed twice (once for each adjacent vertex.)
+    def gradient_L(self, Θ):
+        q = len(Θ)
+        P = list(map(d.γ, Θ))
+
+        return np.array([self._calc_dLq_in_dθ(P, Θ, k) for k in range(q)])
+#+end_src
+
+
 This method evaluates the k-th (even) Fourier mode at θ
 #+begin_src python
     # This evaluates the k-th Fourier mode at θ
