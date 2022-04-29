@@ -149,26 +149,29 @@ inscribed in the domain whose vertices are identified by the list of
 
 Define the gradient of the L function
 #+begin_src python
-    def _calc_dLq_in_dθ(self, p, θ, k):
-        q = len(p)
+    def _calc_dLq_in_dθ(self, P, Θ, k):
+        q = len(P)
 
-        Δx0 = (p[k][0] - p[(k-1)%q][0])
-        Δy0 = (p[k][1] - p[(k-1)%q][1])
+        Δx0 = (P[k][0] - P[(k-1)%q][0])
+        Δy0 = (P[k][1] - P[(k-1)%q][1])
         ℓ0 = math.sqrt(Δx0**2+Δy0**2)
 
-        Δx1 = (p[(k+1)%q][0] - p[k][0])
-        Δy1 = (p[(k+1)%q][1] - p[k][1])
+        Δx1 = (P[(k+1)%q][0] - P[k][0])
+        Δy1 = (P[(k+1)%q][1] - P[k][1])
         ℓ1 = math.sqrt(Δx1**2+Δy1**2)
 
-        cosθ = np.cos(θ[k])
-        sinθ = np.sin(θ[k])
+        cosθ = np.cos(Θ[k])
+        sinθ = np.sin(Θ[k])
 
-        return self.ρ(θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 - (Δx1*cosθ+Δy1*sinθ)/ℓ1)
+        return self.ρ(Θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 -
+                               (Δx1*cosθ+Δy1*sinθ)/ℓ1)
 
     # This is the gradient of the q-length function.
 
-    # TODO: we can still
-    # optimize by perhaps a factor 2 by re-using the displacements.  At the moment they are computed twice (once for each adjacent vertex.)
+    # TODO: we can still optimize by perhaps a factor 2 by re-using
+    # the displacements.  At the moment they are computed twice (once
+    # for each adjacent vertex.)
+
     def gradient_L(self, Θ):
         q = len(Θ)
         P = list(map(self.γ, Θ))
