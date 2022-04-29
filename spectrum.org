@@ -163,7 +163,7 @@ Define the gradient of the L function
         cosθ = np.cos(θ[k])
         sinθ = np.sin(θ[k])
 
-        return d.ρ(θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 - (Δx1*cosθ+Δy1*sinθ)/ℓ1)
+        return self.ρ(θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 - (Δx1*cosθ+Δy1*sinθ)/ℓ1)
 
     # This is the gradient of the q-length function.
 
@@ -171,7 +171,7 @@ Define the gradient of the L function
     # optimize by perhaps a factor 2 by re-using the displacements.  At the moment they are computed twice (once for each adjacent vertex.)
     def gradient_L(self, Θ):
         q = len(Θ)
-        P = list(map(d.γ, Θ))
+        P = list(map(self.γ, Θ))
 
         return np.array([self._calc_dLq_in_dθ(P, Θ, k) for k in range(q)])
 #+end_src
@@ -236,11 +236,11 @@ orbits.
         Θ_guess=[self.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
 
         # find the orbit of rotation number 1/q
-        res = optimize.minimize(lambda Θ:-d.L(Θ),
+        res = optimize.minimize(lambda Θ:-self.L(Θ),
                                 Θ_guess,
                                 method = 'CG',
                                 jac = lambda Θp:-self.gradient_L(Θp))
-        #if (not res.success):
-        print(res)
+        if (not res.success):
+            print(res)
         return res["x"]
 #+end_src
