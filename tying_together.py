@@ -58,6 +58,10 @@ def gen_matrix_Anq(Ω, N):
 
         Θ = Ω.maximal_orbit(q)
 
+        x,y=zip(*list(map(Ω.γ,np.append(Θ,Θ[0]))))
+        Ω.plot()
+        plt.plot(x,y)
+        plt.show();
 
 
         #Generate each index of a row in the matrix
