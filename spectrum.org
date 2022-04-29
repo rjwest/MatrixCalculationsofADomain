@@ -20,6 +20,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 from scipy import integrate as integrate
+
+from gradient_descent_model import gradient_ascent
 #+end_src
 
 The constructor of the class loads a file and parses its content.
@@ -193,6 +195,22 @@ optimize the choice of initial conditions.
 #+end_src
 
 ** Periodic orbits
+
+In this section we define methods to compute and retrieve periodic
+orbits.
+
+*Note*: at the moment we offer a method to find the maximal orbit
+(i.e. orbit of maximal length) in the unconstrained case
+
+#+begin_src python
+    def maximal_orbit(self,q):
+        # guess initial conditions to be equispaced in Lazutkin coords
+        θ_guess=[self.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
+
+        # find the orbit of rotation number 1/q
+        return  gradient_ascent(self, θ_guess)
+#+end_src
+
 
 * Gradient ascent routines
 :properties:

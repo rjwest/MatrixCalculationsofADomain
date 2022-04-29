@@ -57,11 +57,9 @@ def gen_matrix_Anq(d, N):
         # with respect to 0, so will be the solution.
         start = time.time()
 
-        # guess initial conditions to be equispaced in Lazutkin coords
-        θ_guess=[d.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
+        Θ = d.maximal_orbit(q)
 
-        # find the orbit of rotation number 1/q
-        Θ = gradient_ascent(d, θ_guess)
+
 
         #Generate each index of a row in the matrix
         partial = time.time()
