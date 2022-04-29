@@ -235,16 +235,14 @@ orbits.
 #+begin_src python
     def maximal_orbit(self,q):
         # guess initial conditions to be equispaced in Lazutkin coords
-        θ_guess=[self.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
+        Θ_guess=[self.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
 
         # find the orbit of rotation number 1/q
-        return  gradient_ascent(self, θ_guess)
+        res = optimize.minimize(lambda Θ:-d.L(Θ),
+                                Θ_guess,
+                                method = 'CG',
+                                jac = lambda Θp:-self.gradient_L(Θp))
+        #if (not res.success):
+        print(res)
+        return res["x"]
 #+end_src
-
-
-* Gradient ascent routines
-:properties:
-:header-args: :tangle gradient_ascent.py
-:end:
-
-** TODO import methods from .py file
