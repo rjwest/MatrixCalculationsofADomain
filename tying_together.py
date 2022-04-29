@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-from gradient_descent_model import gradient_ascent
 from tangent_parameterization import getPoints
 
 from domain import Domain

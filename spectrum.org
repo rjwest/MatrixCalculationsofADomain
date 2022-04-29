@@ -20,8 +20,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 from scipy import integrate as integrate
-
-from gradient_descent_model import gradient_ascent
 #+end_src
 
 The constructor of the class loads a file and parses its content.
