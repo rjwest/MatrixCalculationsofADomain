@@ -33,6 +33,10 @@ angle $θ$ is given by:
 
 $$ ρ(θ) = \sum_{k=0}^∞ a_k \sin(kθ) + b_k \cos(kθ) $$
 
+For the time being, we are working under the assumption that the
+domain is ℤ₂-symmetric, hence we throw an exception if this is not the
+case.
+
 #+begin_src python
 class Domain:
     def __init__(self, fname):
@@ -41,31 +45,61 @@ class Domain:
                 line = line.strip()
                 self.pairs = line.split('~')
                 self.ρ_Fourier_coefficients = [list(map(float,pair.split(','))) for pair in self.pairs]
-        self.Lazutkin_perimeter = self.raw_Lazutkin(2*math.pi)
 
+        # For now, throw an exception if the domain is not symmetric
+        if (not self.is_symmetric()):
+            raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
+
+        # Select the appropriate methods depending on the symmetry
+        # properties
+        if (self.is_symmetric()):
+            self.ρ = self._ρ_symmetric
+            self.γ = self._γ_symmetric
+        else:
+            self.ρ = self._ρ_generic
+            self.γ = self._γ_generic
+
+        self.Lazutkin_perimeter = self.raw_Lazutkin(2*math.pi)
 #+end_src
 
 - TODO Modify the code to accept a json file, instead
 
 It would be then easy to store (cache) further information about the
  domain should we want to.
+
 ** Basic methods
 
-First we define a method to return the curvature function computed at
-the tangent angle
+We define a method to check the symmetry of the domain.
+Recall that a domain is ℤ₂-symmetric if the $a$-coefficients are all 0.
 #+begin_src python
-    def ρ(self,θ):
+    def is_symmetric(self):
+        return all([ (a == 0) for a,b in self.ρ_Fourier_coefficients])
+#+end_src
+
+We define a method to return the curvature function computed at
+the tangent angle; we provide a slightly optimized version for
+symmetric domains
+#+begin_src python
+    def _ρ_generic(self,θ):
         pt = 0
         n = 0
         for a,b in self.ρ_Fourier_coefficients:
             pt += ((a * np.sin(n*θ)) + (b * np.cos(n*θ)))
             n += 1
         return pt
+
+    def _ρ_symmetric(self,θ):
+        pt = 0
+        n = 0
+        for _,b in self.ρ_Fourier_coefficients:
+            pt += b * np.cos(n*θ)
+            n += 1
+        return pt
 #+end_src
 
 Next, we define a method γ which returns the point parametrized by θ:
 #+begin_src python
-    def γ(self, θ):
+    def _γ_generic(self, θ):
         x = self.ρ_Fourier_coefficients[0][1] * np.sin(θ)
         y = self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))
 
@@ -79,6 +113,19 @@ Next, we define a method γ which returns the point parametrized by θ:
                             ((np.sin((k - 1)*θ)) / (k - 1))) +
                   (b/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                            (((np.cos((k - 1)*θ)) - 1) / (k - 1))))
+        return x,y
+
+    def _γ_symmetric(self, θ):
+        x = self.ρ_Fourier_coefficients[0][1] * np.sin(θ)
+        y = self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))
+
+        for k in range(2, len(self.ρ_Fourier_coefficients),1):
+            _,b = self.ρ_Fourier_coefficients[k]
+            x += ((b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
+                           ((np.sin((k - 1)*θ)) / (k - 1))))
+            y += ((b/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
+                           (((np.cos((k - 1)*θ)) - 1) / (k - 1))))
+
         return x,y
 #+end_src
 
