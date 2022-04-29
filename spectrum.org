@@ -49,8 +49,10 @@ class Domain:
 
 It would be then easy to store (cache) further information about the
  domain should we want to.
+** Basic methods
 
-Now we define a method to return the curvature function
+First we define a method to return the curvature function computed at
+the tangent angle
 #+begin_src python
     def ρ(self,θ):
         pt = 0
@@ -61,7 +63,7 @@ Now we define a method to return the curvature function
         return pt
 #+end_src
 
-And we define a method γ to return the point parametrized by θ:
+Next, we define a method γ which returns the point parametrized by θ:
 #+begin_src python
     def γ(self, θ):
         x = self.ρ_Fourier_coefficients[0][1] * np.sin(θ)
@@ -82,8 +84,7 @@ And we define a method γ to return the point parametrized by θ:
 
 We then define the L method, which returns the length of the polygon
 inscribed in the domain whose vertices are identified by the list of
-θ's given as parameter:
-
+θ's given as parameter.
 #+begin_src python
     # this returns the q-length function
     def L(self, θ):
@@ -103,6 +104,8 @@ This method evaluates the k-th (even) Fourier mode at θ
         return np.cos(k * (2 * math.pi * self.Lazutkin(θ)))
 #+end_src
 
+** Novelty methods
+
 Now, just for fun, we add a method for plotting the domain
 #+begin_src python
     def plot(self):
@@ -113,8 +116,9 @@ Now, just for fun, we add a method for plotting the domain
         plt.axes().set_aspect('equal')
         x_l,y_l=list(zip(*γ_list))
         plt.plot(x_l,y_l)
-        plt.show()
 #+end_src
+
+** Lazutkin parametrization
 
 Now we add methods for computing the Lazutkin coordinates (and
 inverting the Lazutkin coordinates).  Our implementation shows that
@@ -137,6 +141,8 @@ optimize the choice of initial conditions.
             2*math.pi*x,
             lambda t: (self.ρ(t)**(1/3)/self.Lazutkin_perimeter))
 #+end_src
+
+** Periodic orbits
 
 * Gradient ascent routines
 :properties:
