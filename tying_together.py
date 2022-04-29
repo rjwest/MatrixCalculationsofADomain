@@ -20,13 +20,13 @@ from domain import Domain
 # rows will be normalized in such a way that would yield 1 on the
 # diagonal for the disk
 
-def _fetch_row_matrix_Anq(d, θ, N, normalize = False):
+def _fetch_row_matrix_Anq(Ω, θ, N, normalize = False):
     # q is implied by the length of θ
     # Cache the Lazutkin coordinates of the orbit once and for all
-    x=list(map(d.Lazutkin,θ))
+    x=list(map(Ω.Lazutkin,θ))
 
     # Cache the angles φ_j
-    p=list(map(d.γ,θ))
+    p=list(map(Ω.γ,θ))
     q=len(θ)
 
     sinφ=[np.sin(np.arctan2(p[(j+1)%q][1] - p[j][1]
@@ -43,7 +43,7 @@ def _fetch_row_matrix_Anq(d, θ, N, normalize = False):
             for k in range(2, (N+2))]
 
 # this computes all elements of the matrix.
-def gen_matrix_Anq(d, N):
+def gen_matrix_Anq(Ω, N):
     theta_list = []
     matrix = np.array([[]])
     non = 0
@@ -56,13 +56,13 @@ def gen_matrix_Anq(d, N):
         # with respect to 0, so will be the solution.
         start = time.time()
 
-        Θ = d.maximal_orbit(q)
+        Θ = Ω.maximal_orbit(q)
 
 
 
         #Generate each index of a row in the matrix
         partial = time.time()
-        row = _fetch_row_matrix_Anq(d,Θ,N)
+        row = _fetch_row_matrix_Anq(Ω,Θ,N)
         end = time.time()
 
         print(f'{q}-periodic orbit found in {partial-start}s, Row {q-1} computed in {end-partial}s')
@@ -79,21 +79,21 @@ if __name__ == "__main__":
 
 
     #BUILD THE ORIGINAL DOMAIN
-    d = Domain('coeff1.txt')
+    Ω = Domain('coeff1.txt')
 
-    print(d.pairs)
+    print(Ω.pairs)
 
     orig_q = 201
     orig_ep = 2*math.pi/orig_q
     theta_list_domain = [theta for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep)]
 
-    x_list_domain, y_list_domain = getPoints(d.pairs, theta_list_domain)
+    x_list_domain, y_list_domain = getPoints(Ω.pairs, theta_list_domain)
 
     #plt.axes().set_aspect('equal')
     #plt.plot(x_list_domain,y_list_domain)
 
     N = 200
-    matrix = gen_matrix_Anq(d, N)
+    matrix = gen_matrix_Anq(Ω, N)
 
     temp = np.linalg.eigvals(matrix)
     x_list = [ele.real for ele in temp]
