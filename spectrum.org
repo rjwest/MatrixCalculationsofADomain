@@ -236,7 +236,8 @@ orbits.
 #+begin_src python
     def maximal_orbit(self,q):
         # guess initial conditions to be equispaced in Lazutkin coords
-        Θ_guess=[self.inverse_Lazutkin(x) for x in np.arange(0,1,1/q)]
+        # NOTE: we avoid rounding errors by iterating over integers
+        Θ_guess=[self.inverse_Lazutkin(j/q) for j in range(q)]
 
         # find the orbit of rotation number 1/q
         res = optimize.minimize(lambda Θ:-self.L(Θ),
