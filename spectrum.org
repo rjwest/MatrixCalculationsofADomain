@@ -3,6 +3,9 @@
 #+author: Jacopo De Simoi + Robert Westhaver
 
 * Intro
+* Note on notation:
+  We will generally denote scalars with lowercase letters (e.g. θ, x)
+  and vectors with capital letters (e.g. Θ, X)
 * The main library: ~domain~
 :PROPERTIES:
 :header-args: :tangle domain.py
@@ -134,13 +137,13 @@ inscribed in the domain whose vertices are identified by the list of
 θ's given as parameter.
 #+begin_src python
     # this returns the q-length function
-    def L(self, θ):
+    def L(self, Θ):
         summation = 0
-        q=len(θ)
-        p=list(map(self.γ,θ))
+        q=len(Θ)
+        P=list(map(self.γ,Θ))
         for j in range(q):
-            summation += (math.sqrt((p[(j+1) % q][0] - p[j][0])**2 +
-                                    (p[(j+1) % q][1] - p[j][1])**2))
+            summation += (math.sqrt((P[(j+1) % q][0] - P[j][0])**2 +
+                                    (P[(j+1) % q][1] - P[j][1])**2))
         return summation
 #+end_src
 
