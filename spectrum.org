@@ -85,18 +85,14 @@ symmetric domains
 #+begin_src python
     def _ρ_generic(self,θ):
         pt = 0
-        n = 0
-        for a,b in self.ρ_Fourier_coefficients:
+        for n,(a,b) in enumerate(self.ρ_Fourier_coefficients):
             pt += ((a * np.sin(n*θ)) + (b * np.cos(n*θ)))
-            n += 1
         return pt
 
     def _ρ_symmetric(self,θ):
         pt = 0
-        n = 0
-        for _,b in self.ρ_Fourier_coefficients:
+        for n,(_,b) in enumerate(self.ρ_Fourier_coefficients):
             pt += b * np.cos(n*θ)
-            n += 1
         return pt
 #+end_src
 
