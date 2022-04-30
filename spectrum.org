@@ -76,7 +76,7 @@ We define a method to check the symmetry of the domain.
 Recall that a domain is ℤ₂-symmetric if the $a$-coefficients are all 0.
 #+begin_src python
     def is_symmetric(self):
-        return all([ (a == 0) for a,b in self.ρ_Fourier_coefficients])
+        return all(( (a == 0) for a,_ in self.ρ_Fourier_coefficients))
 #+end_src
 
 We define a method to return the curvature function computed at
