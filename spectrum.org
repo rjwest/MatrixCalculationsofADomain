@@ -219,7 +219,7 @@ marked symmetric orbits of even periods
     def _calc_dLq_in_dθ_odd_last(self, P, Θ):
         Δx = (P[-1][0] - P[-2][0])
         Δy = (P[-1][1] - P[-2][1])
-        ℓ = math.sqrt(Δx0**2+Δy0**2)
+        ℓ = math.sqrt(Δx**2+Δy**2)
 
         cosθ = np.cos(Θ[-1])
         sinθ = np.sin(Θ[-1])
