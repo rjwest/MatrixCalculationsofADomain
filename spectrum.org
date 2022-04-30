@@ -147,7 +147,9 @@ inscribed in the domain whose vertices are identified by the list of
         return summation
 #+end_src
 
-Define the gradient of the L function
+Define the gradient of the L function; we define (for now) some
+auxiliary functions.  It will be probably more effective to unroll
+these in the gradient computations
 #+begin_src python
     def _calc_dLq_in_dθ(self, P, Θ, k):
         q = len(P)
@@ -177,6 +179,66 @@ Define the gradient of the L function
         P = list(map(self.γ, Θ))
 
         return np.array([self._calc_dLq_in_dθ(P, Θ, k) for k in range(q)])
+#+end_src
+
+
+We also define two auxiliary methods, which will come in handy later
+on when we construct constrained orbits.
+
+The first one computes the length of the broken line which connects
+the origin to the vertices identified by Θ and ends at the antipodal
+point.  This is the function to maximize when looking for maximal
+marked symmetric orbits of even periods
+#+begin_src python
+    def _L_even(self, Θ):
+        summation = 0
+        full_segment = np.concatenate(([0], Θ, [math.pi]))
+        q=len(full_segment)
+        P=list(map(self.γ,full_segment))
+        for j in range(q-1):
+            summation += (math.sqrt((P[(j+1)][0] - P[j][0])**2 +
+                                    (P[(j+1)][1] - P[j][1])**2))
+        return summation
+
+    def gradient_L_even(self, Θ):
+        full_segment = np.concatenate(( [0], Θ, [math.pi]))
+        q = len(full_segment)
+        P = list(map(self.γ, full_segment))
+
+        return np.array([self._calc_dLq_in_dθ(P, full_segment, k)
+                         for k in range(1,q-1)])
+
+    # implement the odd stuff
+    def _L_odd(self, Θ):
+        summation = 0
+        full_segment = np.concatenate(([0], Θ))
+        P=list(map(self.γ,full_segment))
+        q=len(P)
+        for j in range(q-1):
+            summation += (math.sqrt((P[(j+1)][0] - P[j][0])**2 +
+                                    (P[(j+1)][1] - P[j][1])**2))
+        summation += abs(P[q-1][0]);
+        return summation
+
+    def _calc_dLq_in_dθ_odd_last(self, P, Θ):
+        Δx = (P[-1][0] - P[-2][0])
+        Δy = (P[-1][1] - P[-2][1])
+        ℓ = math.sqrt(Δx0**2+Δy0**2)
+
+        cosθ = np.cos(Θ[-1])
+        sinθ = np.sin(Θ[-1])
+
+        return self.ρ(Θ[-1]) * ((Δx*cosθ+Δy*sinθ)/ℓ + cosθ)
+
+    def gradient_L_odd(self, Θ):
+        full_segment = np.concatenate(( [0], Θ))
+        q = len(full_segment)
+        P = list(map(self.γ, full_segment))
+
+        return np.array([self._calc_dLq_in_dθ(P, full_segment, k)
+                         for k in range(1,q-1)] +
+                        [self._calc_dLq_in_dθ_odd_last(P,full_segment)])
+
 #+end_src
 
 
@@ -247,4 +309,65 @@ orbits.
         if (not res.success):
             print(res)
         return res["x"]
+#+end_src
+
+Next we deal with symmetric orbits; let us first define a method to
+"unfold" a symmetric orbit.
+
+#+begin_src python
+    def unfold_even_orbit(self, Θ):
+        complement_Θ = [ 2*math.pi - θ for θ in reversed(Θ)]
+        return np.concatenate(([0],Θ,[math.pi],complement_Θ))
+
+    def unfold_odd_orbit(self, Θ):
+        complement_Θ = [ 2*math.pi - θ for θ in reversed(Θ)]
+        return np.concatenate(([0],Θ,complement_Θ))
+#+end_src
+
+Here we define methods to find the maximal marked symmetric orbit of a
+given domain.  Recall that /marked/ means that one of the vertices is
+at the origin and /symmetric/ means that the orbit is symmetric with
+respect to the symmetry axis of the domain
+
+#+begin_src python
+    def maximal_marked_symmetric_orbit(self,q):
+        if (not self.is_symmetric()):
+            raise Exception('Symmetric orbits can be found only for symmetric domains')
+        if (q < 2):
+            raise Exception('The period of a periodic orbit should be at least 2 ')
+        elif (q == 2):
+            # If q is 2, return the orbit along the axis by default
+            return np.array([0,math.pi])
+        elif (q % 2 == 0):
+            # even period: we need to maximize the length function
+            # with the 0-th point at the origin and the q/2-th point
+            # at the antipodal point.  The function to maximize is a
+            # function of q/2-1 variables.
+
+            Θ_guess=[self.inverse_Lazutkin(j/q)
+                     for j in range(1,int(q/2))]
+
+            res = optimize.minimize(lambda Θ:-self._L_even(Θ),
+                                    Θ_guess,
+                                    method = 'CG',
+                                    jac = lambda Θp:-self.gradient_L_even(Θp))
+            if (not res.success):
+                print(res)
+            return self.unfold_even_orbit(res["x"])
+        else:
+            # odd period: we need to maximize the length function with
+            # the 0-th point at the origin and assuming orthogonality
+            # of the side in the middle The function to maximize is a
+            # function of … variables.
+
+            Θ_guess=[self.inverse_Lazutkin(j/q)
+                     for j in range(1,int((q+1)/2))]
+
+            res = optimize.minimize(lambda Θ:-self._L_odd(Θ),
+                                    Θ_guess,
+                                    method = 'CG',
+                                    jac = lambda Θp:-self.gradient_L_odd(Θp))
+            if (not res.success):
+                print(res)
+            return self.unfold_odd_orbit(res["x"])
 #+end_src

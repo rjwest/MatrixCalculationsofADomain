@@ -56,13 +56,12 @@ def gen_matrix_Anq(Ω, N):
         # with respect to 0, so will be the solution.
         start = time.time()
 
-        Θ = Ω.maximal_orbit(q)
+        Θ = Ω.maximal_marked_symmetric_orbit(q)
 
         x,y=zip(*list(map(Ω.γ,np.append(Θ,Θ[0]))))
         Ω.plot()
         plt.plot(x,y)
         plt.show();
-
 
         #Generate each index of a row in the matrix
         partial = time.time()
