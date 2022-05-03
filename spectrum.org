@@ -47,8 +47,9 @@ class Domain:
             for line in fp:
                 line = line.strip()
                 self.pairs = line.split('~')
-                self.ρ_Fourier_coefficients = [list(map(float,pair.split(','))) for pair in self.pairs]
-
+                self.ρ_Fourier_coefficients = [[float(x) for x in pair.split(',')] for pair in self.pairs]
+                self.enumerated_ρ_coefficients = enumerate(self.ρ_Fourier_coefficients)
+                self.enumerated_ρ_coefficients = list(filter(lambda x: x[1][0] != 0. or  x[1][1] != 0.,self.enumerated_ρ_coefficients))
         # For now, throw an exception if the domain is not symmetric
         if (not self.is_symmetric()):
             raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
@@ -85,13 +86,13 @@ symmetric domains
 #+begin_src python
     def _ρ_generic(self,Θ):
         pt = 0
-        for n,(a,b) in enumerate(self.ρ_Fourier_coefficients):
+        for n,(a,b) in self.enumerated_ρ_coefficients:
             pt += ((a * np.sin(n*Θ)) + (b * np.cos(n*Θ)))
         return pt
 
     def _ρ_symmetric(self,Θ):
         pt = 0
-        for n,(_,b) in enumerate(self.ρ_Fourier_coefficients):
+        for n,(_,b) in self.enumerated_ρ_coefficients:
             pt += b * np.cos(n*Θ)
         return pt
 #+end_src
@@ -103,8 +104,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k in range(2, len(self.ρ_Fourier_coefficients),1):
-            a,b = self.ρ_Fourier_coefficients[k]
+        for k,(a,b) in self.enumerated_ρ_coefficients:
             res += np.array([
                 ((a/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                           ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
@@ -121,8 +121,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k in range(2, len(self.ρ_Fourier_coefficients),1):
-            _,b = self.ρ_Fourier_coefficients[k]
+        for k,(_,b) in self.enumerated_ρ_coefficients:
             res += np.array([
                 ((b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
                           ((np.sin((k - 1)*θ)) / (k - 1)))),
