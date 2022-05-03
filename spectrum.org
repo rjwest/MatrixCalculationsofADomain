@@ -137,49 +137,30 @@ inscribed in the domain whose vertices are identified by the list of
 θ's given as parameter.
 #+begin_src python
     # this returns the q-length function
-    def L(self, Θ):
-        summation = 0
-        q=len(Θ)
-        P=list(map(self.γ,Θ))
-        for j in range(q):
-            summation += (math.sqrt((P[(j+1) % q][0] - P[j][0])**2 +
-                                    (P[(j+1) % q][1] - P[j][1])**2))
-        return summation
+    def L_vector(self, Θ):
+        Θ_wrapped=np.pad(Θ,(0,1),'wrap')
+        P=self.γ(Θ_wrapped)
+
+        return np.sum( np.sqrt( np.sum( np.square( np.diff(P)),axis=0)))
 #+end_src
 
-Define the gradient of the L function; we define (for now) some
-auxiliary functions.  It will be probably more effective to unroll
-these in the gradient computations
+Define the gradient of the L function.
 #+begin_src python
-    def _calc_dLq_in_dθ(self, P, Θ, k):
-        q = len(P)
+    def gradient_L (self, Θ):
 
-        Δx0 = (P[k][0] - P[(k-1)%q][0])
-        Δy0 = (P[k][1] - P[(k-1)%q][1])
-        ℓ0 = math.sqrt(Δx0**2+Δy0**2)
+        Θ_wrapped=np.pad(Θ,(0,1),'wrap')
+        P = self.γ(Θ_wrapped)
 
-        Δx1 = (P[(k+1)%q][0] - P[k][0])
-        Δy1 = (P[(k+1)%q][1] - P[k][1])
-        ℓ1 = math.sqrt(Δx1**2+Δy1**2)
+        Δ = np.diff(P)
+        ℓ = np.sqrt(np.sum(np.square(Δ),axis=0))
 
-        cosθ = np.cos(Θ[k])
-        sinθ = np.sin(Θ[k])
+        # check if it is faster with atan2; it is not impossible
+        u = np.pad(Δ/ℓ,((0,0),(1,0)),'wrap')
 
-        return self.ρ(Θ[k]) * ((Δx0*cosθ+Δy0*sinθ)/ℓ0 -
-                               (Δx1*cosθ+Δy1*sinθ)/ℓ1)
+        t = np.array([np.cos(Θ),np.sin(Θ)]) # unit tangent vector(s)
 
-    # This is the gradient of the q-length function.
-
-    # TODO: we can still optimize by perhaps a factor 2 by re-using
-    # the displacements.  At the moment they are computed twice (once
-    # for each adjacent vertex.)
-
-    def gradient_L(self, Θ):
-        q = len(Θ)
-        P = list(map(self.γ, Θ))
-
-        return np.array([self._calc_dLq_in_dθ(P, Θ, k) for k in range(q)])
-#+end_src
+        return self.ρ(Θ) * np.sum(-np.diff(u)*t,axis=0)
+    #+end_src
 
 
 We also define two auxiliary methods, which will come in handy later
