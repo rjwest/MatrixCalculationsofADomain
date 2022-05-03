@@ -83,16 +83,16 @@ We define a method to return the curvature function computed at
 the tangent angle; we provide a slightly optimized version for
 symmetric domains
 #+begin_src python
-    def _ρ_generic(self,θ):
+    def _ρ_generic(self,Θ):
         pt = 0
         for n,(a,b) in enumerate(self.ρ_Fourier_coefficients):
-            pt += ((a * np.sin(n*θ)) + (b * np.cos(n*θ)))
+            pt += ((a * np.sin(n*Θ)) + (b * np.cos(n*Θ)))
         return pt
 
-    def _ρ_symmetric(self,θ):
+    def _ρ_symmetric(self,Θ):
         pt = 0
         for n,(_,b) in enumerate(self.ρ_Fourier_coefficients):
-            pt += b * np.cos(n*θ)
+            pt += b * np.cos(n*Θ)
         return pt
 #+end_src
 
