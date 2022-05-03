@@ -312,12 +312,10 @@ Next we deal with symmetric orbits; let us first define a method to
 
 #+begin_src python
     def unfold_even_orbit(self, Θ):
-        complement_Θ = [ 2*math.pi - θ for θ in reversed(Θ)]
-        return np.concatenate(([0],Θ,[math.pi],complement_Θ))
+        return np.concatenate(([0],Θ,[math.pi],2*math.pi - np.flip(Θ)))
 
     def unfold_odd_orbit(self, Θ):
-        complement_Θ = [ 2*math.pi - θ for θ in reversed(Θ)]
-        return np.concatenate(([0],Θ,complement_Θ))
+        return np.concatenate(([0],Θ,2*math.pi - np.flip(Θ)))
 #+end_src
 
 Here we define methods to find the maximal marked symmetric orbit of a
