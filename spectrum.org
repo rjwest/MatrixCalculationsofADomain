@@ -104,7 +104,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k,(a,b) in self.enumerated_ρ_coefficients:
+        for k,(a,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
                 ((a/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                           ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
@@ -121,7 +121,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k,(_,b) in self.enumerated_ρ_coefficients:
+        for k,(_,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
                 ((b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
                           ((np.sin((k - 1)*θ)) / (k - 1)))),
