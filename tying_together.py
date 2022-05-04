@@ -25,14 +25,11 @@ from domain import Domain
 # Defines number of multithreaded pools **May require lower setting**
 MAX_JOBS = 16
 
-def _daisy(Ω, N, q):
-    # each row is independent on the other rows; each could be computed
-    # in a separate thread
-    
-        # Set up uniform (equispaced) initial conditions for gradient
-        # ascent Note that since the initial condition is symmetric
-        # with respect to 0, so will be the solution.
-        #start = time.time()
+def _build_matrix_row(Ω, N, q):   
+    # Set up uniform (equispaced) initial conditions for gradient
+    # ascent Note that since the initial condition is symmetric
+    # with respect to 0, so will be the solution.
+    #start = time.time()
 
     Θ = Ω.maximal_marked_symmetric_orbit(q)
 
@@ -70,9 +67,7 @@ def _fetch_row_matrix_Anq(Ω, θ, N, normalize = False):
 # this computes all elements of the matrix.
 def gen_matrix_Anq(Ω, N):
     q = []
-    theta_list = []
     matrix = np.array([[]])
-    non = 0
     
     for i in range(2, (N+2), 1):
         q += [i]
@@ -80,16 +75,16 @@ def gen_matrix_Anq(Ω, N):
     #Generate each index of a row in the matrix
     partial = time.time()
 
+    #Create process pool, mapping to each row in the matrix to be built
     pool = Pool(MAX_JOBS)
-    matrix = pool.starmap(_daisy, zip(itertools.repeat(Ω), itertools.repeat(N), q))
+    matrix = pool.starmap(_build_matrix_row, zip(itertools.repeat(Ω), itertools.repeat(N), q))
     pool.close()
     pool.join()
     
     end = time.time()
-    
-    print(matrix)
 
-    print(f'-periodic orbit found in {partial-partial}s, Row {1-1} computed in {end-partial}s')
+    #print(f'-periodic orbit found in {partial-partial}s,{N} Rows computed in {end-partial}s')
+    print(f'{N} Rows computed in {end-partial}s')
 
     return np.array(matrix)
 
@@ -123,9 +118,6 @@ if __name__ == "__main__":
 
     max_y = max(y_list)
     min_y = min(y_list)
-    
-    print(max_x)
-    print(min_x)
 
     print('MATRIX COMPUTED')
     #print(matrix)
@@ -140,15 +132,15 @@ if __name__ == "__main__":
         # extract imaginary part
         y = [ele.imag for ele in eigenvals]
 
-        # plt.figure()
-        # plt.xlim(min_x - 0.5, max_x + 0.5)
-        # plt.ylim(min_y - 0.5, max_y + 0.5)
-        # plt.scatter(x, y)
+        plt.figure()
+        plt.xlim(min_x - 0.5, max_x + 0.5)
+        plt.ylim(min_y - 0.5, max_y + 0.5)
+        plt.scatter(x, y)
 
-        # plt.ylabel('Imaginary')
-        # plt.xlabel('Real')
-        # plt.savefig(f'eigens//eigens_{n}.png')
-        # plt.show()
+        plt.ylabel('Imaginary')
+        plt.xlabel('Real')
+        plt.savefig(f'eigens//eigens_{n}.png')
+        plt.show()
 
         '''
         #PRINTS THE MATRIX IN READABLE FORM
@@ -160,15 +152,15 @@ if __name__ == "__main__":
             print(string)
         '''
 
-    # plt.figure()
-    # plt.xlim(min_x - 0.5, max_x + 0.5)
-    # plt.ylim(min_y - 0.5, max_y + 0.5)
-    # plt.scatter(x_list, y_list)
+    plt.figure()
+    plt.xlim(min_x - 0.5, max_x + 0.5)
+    plt.ylim(min_y - 0.5, max_y + 0.5)
+    plt.scatter(x_list, y_list)
 
-    # plt.ylabel('Imaginary')
-    # plt.xlabel('Real')
-    # plt.savefig(f'eigens//eigens_{N}.png')
-    # plt.show()
+    plt.ylabel('Imaginary')
+    plt.xlabel('Real')
+    plt.savefig(f'eigens//eigens_{N}.png')
+    plt.show()
 
 
 
