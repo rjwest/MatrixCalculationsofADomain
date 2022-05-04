@@ -5,185 +5,164 @@ Created on Mon Mar 12 19:14:43 2022
 @author: Robert
 """
 
-import scipy.integrate as integrate
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import multiprocessing
+import itertools
+from multiprocessing.pool import Pool
 
-from gradient_descent_model import gradient_ascent
 from tangent_parameterization import getPoints
 
+from domain import Domain
 
-THREADS = 20
+# this computes the row of first variations of the length of the
+# orbits with respect to the Fourier modes.  This method takes an
+# optional flag for normalization; if it is set to True, the matrix
+# rows will be normalized in such a way that would yield 1 on the
+# diagonal for the disk
 
-def _l_of_thetas(x_list, y_list, q):
-    summation = 0
-    for j in range(q):
-        if j + 1 == q:
-            j_plus_1 = 0
-        else:
-            j_plus_1 = j + 1
-            
-        summation += (math.sqrt((x_list[j_plus_1] - x_list[j])**2 + (y_list[j_plus_1] - y_list[j])**2))
-    return summation
+# Defines number of multithreaded pools **May require lower setting**
+MAX_JOBS = 16
 
-def _rho_of_theta(theta, pairs):
-    bs = []
-    for pair in pairs:
-        a,b = pair.split(',')
-        a = float(a)
-        bs += [float(b)]
-    summation = 0
-    for k in range(len(pairs)):
-        summation += bs[k] * np.cos(k*theta)
-    return summation
+def _build_matrix_row(Ω, N, q):   
+    # Set up uniform (equispaced) initial conditions for gradient
+    # ascent Note that since the initial condition is symmetric
+    # with respect to 0, so will be the solution.
+    #start = time.time()
 
-def _z_of_theta(theta, pairs):
-    return integrate.quad(lambda t,pairs: _rho_of_theta(t, pairs)**(1/3), 0, theta, args=(pairs))[0]
+    Θ = Ω.maximal_marked_symmetric_orbit(q)
 
-def _e_n(theta, pairs, k, c): 
-    lp = (2*math.pi)/c
-    
-    return np.cos(k * (lp * _z_of_theta(theta, pairs)))    
+    x,y=zip(*list(map(Ω.γ,np.append(Θ,Θ[0]))))
+    Ω.plot()
+    plt.plot(x,y)
+    plt.show();
 
-def _fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs):
-    summation = 0
-    for j in range(q):
-        if j+1 == q:
-            j1 = 0
-        else:
-            j1 = j+1
-            
-        x_list,y_list = getPoints(pairs, [gradient_thetas[j], gradient_thetas[j1]]) 
-        
-        alpha_l = np.arctan2(y_list[1] - y_list[0], x_list[1] - x_list[0])
-        
-        if alpha_l < 0:
-            alpha_l += 2*math.pi
-        
-        plt.plot(x_list,y_list)
+    row = _fetch_row_matrix_Anq(Ω,Θ,N)
 
-        #print(f'Argument of sine: {(alpha_l - gradient_thetas[j])/(2*math.pi)}\n j is: {j}\n q is: {q}')
-        #print(f'alpha is: {alpha_l}\n Gradient theta is: {gradient_thetas[j]}')
-        summation += _e_n(gradient_thetas[j], pairs, k, c) * np.sin(( alpha_l - gradient_thetas[j]))
-    return summation
-        
-def gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain):
-    theta_list = []
+    return row
+
+def _fetch_row_matrix_Anq(Ω, θ, N, normalize = False):
+    # q is implied by the length of θ
+    # Cache the Lazutkin coordinates of the orbit once and for all
+    x=list(map(Ω.Lazutkin,θ))
+
+    # Cache the angles φ_j
+    p=list(map(Ω.γ,θ))
+    q=len(θ)
+
+    sinφ=[np.sin(np.arctan2(p[(j+1)%q][1] - p[j][1]
+                            ,p[(j+1)%q][0] - p[j][0])-θ[j])
+          for j in range(q)]
+
+    if (normalize):
+        normalization = 1/sum([ sinφ[j] for j in range(q)])
+    else:
+        normalization = 1;
+
+    return [sum([ np.cos(2*math.pi*k * x[j])*sinφ[j]*normalization
+                  for j in range(q)])
+            for k in range(2, (N+2))]
+
+# this computes all elements of the matrix.
+def gen_matrix_Anq(Ω, N):
+    q = []
     matrix = np.array([[]])
-    non = 0
-    c = integrate.quad(lambda t,pairs: _rho_of_theta(t, pairs)**(1/3), 0, 2*math.pi, args=(pairs))[0]
     
-    for q in range(2, (N+2), 1):
-        theta_list = []
-        
-        #Get gradient thetas for q
-        row = np.array([])
-        ep = 2*math.pi/q        
-        for theta in np.arange(0,(q*ep),ep):
-            theta_list += [theta]
-        
-        #print(q*ep)
-        #print(theta_list)
-        
-        gradient_thetas = gradient_ascent(theta_list, pairs, 0.01)
-        #print(f'grad! {gradient_thetas}')
+    for i in range(2, (N+2), 1):
+        q += [i]
 
-        #Generate each index of a row in the matrix
-        for k in range(2, N+2):
-            row = np.append(row, [_fetch_val_matrix_Anq(gradient_thetas, k, c, q, pairs)])
-        if non == 0:
-            matrix = [row]
-            non = 1
-            print(f'Row {q-1} computed')
-        else:
-            matrix = np.append(matrix, [row], axis=0)
-            print(f'Row {q-1} computed')
+    #Generate each index of a row in the matrix
+    partial = time.time()
+
+    #Create process pool, mapping to each row in the matrix to be built
+    pool = Pool(MAX_JOBS)
+    matrix = pool.starmap(_build_matrix_row, zip(itertools.repeat(Ω), itertools.repeat(N), q))
+    pool.close()
+    pool.join()
     
-    return matrix
-    
+    end = time.time()
+
+    #print(f'-periodic orbit found in {partial-partial}s,{N} Rows computed in {end-partial}s')
+    print(f'{N} Rows computed in {end-partial}s')
+
+    return np.array(matrix)
+
 if __name__ == "__main__":
-    
-    fname = 'coeff1.txt'
-    theta_list_domain = []
-    pairs = []
-    
-    
+
     #BUILD THE ORIGINAL DOMAIN
+    Ω = Domain('coeff1.txt')
+
+    print(Ω.pairs)
+
     orig_q = 201
     orig_ep = 2*math.pi/orig_q
-    with open(fname) as fp:
-        for line in fp:
-            line = line.strip()
-            pairs = line.split('~')
     
-    for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep):
-        theta_list_domain += [theta]
-        
-    x_list_domain, y_list_domain = getPoints(pairs, theta_list_domain)    
+    theta_list_domain = [theta for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep)]
+
+    x_list_domain, y_list_domain = getPoints(Ω.pairs, theta_list_domain)
 
     #plt.axes().set_aspect('equal')
     #plt.plot(x_list_domain,y_list_domain)
-     
-    N = 200
-    matrix = gen_matrix_Anq(pairs, N, x_list_domain, y_list_domain)
+
+    N = 1000
     
+    matrix = gen_matrix_Anq(Ω, N)
+
     temp = np.linalg.eigvals(matrix)
     x_list = [ele.real for ele in temp]
     y_list = [ele.imag for ele in temp]
-    
+
     max_x = max(x_list)
     min_x = min(x_list)
-    
+
     max_y = max(y_list)
     min_y = min(y_list)
-    
+
     print('MATRIX COMPUTED')
     #print(matrix)
-    
+
     for n in range(2,N):
         #print(matrix[0:n,0:n])
         inner_matrix = matrix[0:n,0:n]
-        eiganvals = np.linalg.eigvals(inner_matrix)
-        
+        eigenvals = np.linalg.eigvals(inner_matrix)
+
         # extract real part
-        x = [ele.real for ele in eiganvals]
+        x = [ele.real for ele in eigenvals]
         # extract imaginary part
-        y = [ele.imag for ele in eiganvals]
-        
+        y = [ele.imag for ele in eigenvals]
+
         plt.figure()
         plt.xlim(min_x - 0.5, max_x + 0.5)
         plt.ylim(min_y - 0.5, max_y + 0.5)
         plt.scatter(x, y)
-        
+
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
-        plt.savefig(f'eigans//eigans_{n}.png')
+        plt.savefig(f'eigens//eigens_{n}.png')
         plt.show()
-        
+
         '''
         #PRINTS THE MATRIX IN READABLE FORM
         np.set_printoptions(threshold=np.inf)
         for cell in matrix:
             string = ''
             for item in cell:
-                string = f'{string} {item.round(3)}'    
+                string = f'{string} {item.round(3)}'
             print(string)
         '''
-        
+
     plt.figure()
     plt.xlim(min_x - 0.5, max_x + 0.5)
     plt.ylim(min_y - 0.5, max_y + 0.5)
     plt.scatter(x_list, y_list)
-    
+
     plt.ylabel('Imaginary')
     plt.xlabel('Real')
-    plt.savefig(f'eigans//eigans_{N}.png')
+    plt.savefig(f'eigens//eigens_{N}.png')
     plt.show()
-            
-        
-            
+
+
+
         #print('')
-        #print(f'eigens: {eiganvals}')
+        #print(f'eigens: {eigenvals}')

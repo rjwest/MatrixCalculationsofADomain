@@ -1,0 +1,346 @@
+# -*- org-src-preserve-indentation: t -*-
+#+title: The spectrum of Linearized Isospectral operators
+#+author: Jacopo De Simoi + Robert Westhaver
+
+* Intro
+* Note on notation:
+  We will generally denote scalars with lowercase letters (e.g. θ, x)
+  and vectors with capital letters (e.g. Θ, X)
+* The main library: ~domain~
+:PROPERTIES:
+:header-args: :tangle domain.py
+:END:
+
+In this section we create the ~Domain~ class, which will be
+responsible for containing and processing information about each
+domain.
+#+begin_src python
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize as optimize
+from scipy import integrate as integrate
+#+end_src
+
+The constructor of the class loads a file and parses its content.
+The file –for now– is one line of tilde-separated list of pairs a,b,
+where
+
+- $a$ is the list of coefficients of the $sin$ Fourier modes of the
+  curvature radius
+- $b$ is the list of coefficients of the $cos$ Fourier modes of the
+  curvature radius
+
+In other words, the curvature radius $ρ$ as a function of the tangent
+angle $θ$ is given by:
+
+$$ ρ(θ) = \sum_{k=0}^∞ a_k \sin(kθ) + b_k \cos(kθ) $$
+
+For the time being, we are working under the assumption that the
+domain is ℤ₂-symmetric, hence we throw an exception if this is not the
+case.
+
+#+begin_src python
+class Domain:
+    def __init__(self, fname):
+        with open(fname) as fp:
+            for line in fp:
+                line = line.strip()
+                self.pairs = line.split('~')
+                self.ρ_Fourier_coefficients = [list(map(float,pair.split(','))) for pair in self.pairs]
+
+        # For now, throw an exception if the domain is not symmetric
+        if (not self.is_symmetric()):
+            raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
+
+        # Select the appropriate methods depending on the symmetry
+        # properties
+        if (self.is_symmetric()):
+            self.ρ = self._ρ_symmetric
+            self.γ = self._γ_symmetric
+        else:
+            self.ρ = self._ρ_generic
+            self.γ = self._γ_generic
+
+        self.Lazutkin_perimeter = self.raw_Lazutkin(2*math.pi)
+#+end_src
+
+- TODO Modify the code to accept a json file, instead
+
+It would be then easy to store (cache) further information about the
+ domain should we want to.
+
+** Basic methods
+
+We define a method to check the symmetry of the domain.
+Recall that a domain is ℤ₂-symmetric if the $a$-coefficients are all 0.
+#+begin_src python
+    def is_symmetric(self):
+        return all(( (a == 0) for a,_ in self.ρ_Fourier_coefficients))
+#+end_src
+
+We define a method to return the curvature function computed at
+the tangent angle; we provide a slightly optimized version for
+symmetric domains
+#+begin_src python
+    def _ρ_generic(self,Θ):
+        pt = 0
+        for n,(a,b) in enumerate(self.ρ_Fourier_coefficients):
+            pt += ((a * np.sin(n*Θ)) + (b * np.cos(n*Θ)))
+        return pt
+
+    def _ρ_symmetric(self,Θ):
+        pt = 0
+        for n,(_,b) in enumerate(self.ρ_Fourier_coefficients):
+            pt += b * np.cos(n*Θ)
+        return pt
+#+end_src
+
+Next, we define a method γ which returns the point parametrized by θ:
+#+begin_src python
+    def _γ_generic(self, θ):
+        res = np.array([
+            self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
+            self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
+
+        for k in range(2, len(self.ρ_Fourier_coefficients),1):
+            a,b = self.ρ_Fourier_coefficients[k]
+            res += np.array([
+                ((a/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
+                          ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
+                 (b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
+                          ((np.sin((k - 1)*θ)) / (k - 1)))),
+                ((a/2) * (-((np.sin((k + 1)*θ)) / (k + 1)) +
+                          ((np.sin((k - 1)*θ)) / (k - 1))) +
+                 (b/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
+                          (((np.cos((k - 1)*θ)) - 1) / (k - 1))))])
+        return res
+
+    def _γ_symmetric(self, θ):
+        res = np.array([
+            self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
+            self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
+
+        for k in range(2, len(self.ρ_Fourier_coefficients),1):
+            _,b = self.ρ_Fourier_coefficients[k]
+            res += np.array([
+                ((b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
+                          ((np.sin((k - 1)*θ)) / (k - 1)))),
+                ((b/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
+                          (((np.cos((k - 1)*θ)) - 1) / (k - 1))))])
+
+        return res
+#+end_src
+
+We then define the L method, which returns the length of the polygon
+inscribed in the domain whose vertices are identified by the list of
+θ's given as parameter.
+#+begin_src python
+    # this returns the q-length function
+    def L_vector(self, Θ):
+        Θ_wrapped=np.pad(Θ,(0,1),'wrap')
+        P=self.γ(Θ_wrapped)
+
+        return np.sum( np.sqrt( np.sum( np.square( np.diff(P)),axis=0)))
+#+end_src
+
+Define the gradient of the L function.
+#+begin_src python
+    def gradient_L (self, Θ):
+
+        Θ_wrapped=np.pad(Θ,(0,1),'wrap')
+        P = self.γ(Θ_wrapped)
+
+        Δ = np.diff(P)
+        ℓ = np.sqrt(np.sum(np.square(Δ),axis=0))
+
+        # check if it is faster with atan2; it is not impossible
+        u = np.pad(Δ/ℓ,((0,0),(1,0)),'wrap')
+
+        t = np.array([np.cos(Θ),np.sin(Θ)]) # unit tangent vector(s)
+
+        return self.ρ(Θ) * np.sum(-np.diff(u)*t,axis=0)
+    #+end_src
+
+
+We also define two auxiliary methods, which will come in handy later
+on when we construct constrained orbits.
+
+The first one computes the length of the broken line which connects
+the origin to the vertices identified by Θ and ends at the antipodal
+point.  This is the function to maximize when looking for maximal
+marked symmetric orbits of even periods
+#+begin_src python
+    # check which one is faster between padding and append prepend in diff.
+    def _L_even(self, Θ):
+        full_segment = np.pad(Θ, (1,1), 'constant', constant_values=(0, math.pi))
+        P=self.γ(full_segment)
+        return np.sum( np.sqrt( np.sum( np.square( np.diff(P)),axis=0)))
+
+    # this is 100 times faster than the non-vectorized one on 1000
+    # points, or about 20 times faster on ~30.
+    def gradient_L_even(self, Θ):
+        full_segment = np.pad(Θ, (1,1), 'constant', constant_values=(0, math.pi))
+
+        P = self.γ(full_segment)
+
+        Δ = np.diff(P)
+        ℓ = np.sqrt(np.sum(np.square(Δ),axis=0))
+
+        # check if it is faster with atan2; it is not impossible
+        u = Δ/ℓ
+
+        t = np.array([np.cos(Θ),np.sin(Θ)]) # unit tangent vector(s)
+
+        return self.ρ(Θ) * np.sum(-np.diff(u)*t,axis=0)
+
+    def _L_odd(self, Θ):
+        full_segment = np.insert(Θ,0,0.)
+        P = self.γ(full_segment)
+
+        return np.sum( np.sqrt( np.sum( np.square( np.diff(P)),axis=0)),initial=np.abs(P[0][-1]))
+
+    def gradient_L_odd(self, Θ):
+
+        P = self.γ(Θ)
+
+        Δ = np.diff(P,prepend=np.array([[0.],[0.]]))
+        ℓ = np.sqrt(np.sum(np.square(Δ),axis=0))
+
+        # check if it is faster with atan2; it is not impossible
+        u = Δ/ℓ
+        u = np.concatenate((u,np.array([[-1.],[0.]])),axis=1)
+
+        t = np.array([np.cos(Θ),np.sin(Θ)]) # unit tangent vector(s)
+
+        return self.ρ(Θ) * np.sum(-np.diff(u)*t,axis=0)
+#+end_src
+
+
+This method evaluates the k-th (even) Fourier mode at θ
+#+begin_src python
+    # This evaluates the k-th Fourier mode at θ
+    def  e_k(self, θ, k):
+        return np.cos(k * (2 * math.pi * self.Lazutkin(θ)))
+#+end_src
+
+** Novelty methods
+
+Now, just for fun, we add a method for plotting the domain
+#+begin_src python
+    def plot(self):
+        ε = math.pi/100
+
+        #adding epsilon will add 1 last point which ends up near the beginning point of graph
+        γ_list = [ self.γ(θ) for θ in np.arange(0,(2*math.pi)+ε , ε)]
+        plt.axes().set_aspect('equal')
+        x_l,y_l=list(zip(*γ_list))
+        plt.plot(x_l,y_l)
+#+end_src
+
+** Lazutkin parametrization
+
+Now we add methods for computing the Lazutkin coordinates (and
+inverting the Lazutkin coordinates).  Our implementation shows that
+in the computation of the elements of each row, the gradient
+optimization is taking the bulk of the time, so it makes sense to
+optimize the choice of initial conditions.
+
+#+begin_src python
+    def raw_Lazutkin(self,θ):
+        # This returns the un-normalized Lazutkin parametrization at θ
+        return integrate.quad(lambda t: self.ρ(t)**(1/3), 0, θ)[0]
+
+    def Lazutkin(self,θ):
+        return self.raw_Lazutkin(θ)/self.Lazutkin_perimeter;
+
+    # implement inverse lazutkin
+    def inverse_Lazutkin(self, x):
+        return optimize.newton(
+            lambda t: self.Lazutkin(t)-x,
+            2*math.pi*x,
+            lambda t: (self.ρ(t)**(1/3)/self.Lazutkin_perimeter))
+#+end_src
+
+** Periodic orbits
+
+In this section we define methods to compute and retrieve periodic
+orbits.
+
+*Note*: at the moment we offer a method to find the maximal orbit
+(i.e. orbit of maximal length) in the unconstrained case
+
+#+begin_src python
+    def maximal_orbit(self,q):
+        # guess initial conditions to be equispaced in Lazutkin coords
+        # NOTE: we avoid rounding errors by iterating over integers
+        Θ_guess=[self.inverse_Lazutkin(j/q) for j in range(q)]
+
+        # find the orbit of rotation number 1/q
+        res = optimize.minimize(lambda Θ:-self.L(Θ),
+                                Θ_guess,
+                                method = 'CG',
+                                jac = lambda Θp:-self.gradient_L(Θp))
+        if (not res.success):
+            print(res)
+        return res["x"]
+#+end_src
+
+Next we deal with symmetric orbits; let us first define a method to
+"unfold" a symmetric orbit.
+
+#+begin_src python
+    def unfold_even_orbit(self, Θ):
+        return np.concatenate(([0],Θ,[math.pi],2*math.pi - np.flip(Θ)))
+
+    def unfold_odd_orbit(self, Θ):
+        return np.concatenate(([0],Θ,2*math.pi - np.flip(Θ)))
+#+end_src
+
+Here we define methods to find the maximal marked symmetric orbit of a
+given domain.  Recall that /marked/ means that one of the vertices is
+at the origin and /symmetric/ means that the orbit is symmetric with
+respect to the symmetry axis of the domain
+
+#+begin_src python
+    def maximal_marked_symmetric_orbit(self,q):
+        if (not self.is_symmetric()):
+            raise Exception('Symmetric orbits can be found only for symmetric domains')
+        if (q < 2):
+            raise Exception('The period of a periodic orbit should be at least 2 ')
+        elif (q == 2):
+            # If q is 2, return the orbit along the axis by default
+            return np.array([0,math.pi])
+        elif (q % 2 == 0):
+            # even period: we need to maximize the length function
+            # with the 0-th point at the origin and the q/2-th point
+            # at the antipodal point.  The function to maximize is a
+            # function of q/2-1 variables.
+
+            Θ_guess=np.array([self.inverse_Lazutkin(j/q)
+                              for j in range(1,int(q/2))])
+
+            res = optimize.minimize(lambda Θ:-self._L_even(Θ),
+                                    Θ_guess,
+                                    method = 'CG',
+                                    jac = lambda Θp:-self.gradient_L_even(Θp))
+            if (not res.success):
+                print(res)
+            return self.unfold_even_orbit(res["x"])
+        else:
+            # odd period: we need to maximize the length function with
+            # the 0-th point at the origin and assuming orthogonality
+            # of the side in the middle The function to maximize is a
+            # function of … variables.
+
+            Θ_guess=np.array([self.inverse_Lazutkin(j/q)
+                              for j in range(1,int((q+1)/2))])
+
+            res = optimize.minimize(lambda Θ:-self._L_odd(Θ),
+                                    Θ_guess,
+                                    method = 'CG',
+                                    jac = lambda Θp:-self.gradient_L_odd(Θp))
+            if (not res.success):
+                print(res)
+            return self.unfold_odd_orbit(res["x"])
+#+end_src
