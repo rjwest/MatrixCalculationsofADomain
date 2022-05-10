@@ -25,7 +25,7 @@ from domain import Domain
 # Defines number of multithreaded pools **May require lower setting**
 MAX_JOBS = 16
 
-def _build_matrix_row(Ω, N, q):   
+def _build_matrix_row(Ω, N, q):
     # Set up uniform (equispaced) initial conditions for gradient
     # ascent Note that since the initial condition is symmetric
     # with respect to 0, so will be the solution.
@@ -33,16 +33,11 @@ def _build_matrix_row(Ω, N, q):
 
     Θ = Ω.maximal_marked_symmetric_orbit(q)
 
-    x,y=zip(*list(map(Ω.γ,np.append(Θ,Θ[0]))))
-    Ω.plot()
-    plt.plot(x,y)
-    plt.show();
-
     row = _fetch_row_matrix_Anq(Ω,Θ,N)
 
     return row
 
-def _fetch_row_matrix_Anq(Ω, θ, N, normalize = False):
+def _fetch_row_matrix_Anq_old(Ω, θ, N, normalize = False):
     # q is implied by the length of θ
     # Cache the Lazutkin coordinates of the orbit once and for all
     x=list(map(Ω.Lazutkin,θ))
@@ -64,23 +59,38 @@ def _fetch_row_matrix_Anq(Ω, θ, N, normalize = False):
                   for j in range(q)])
             for k in range(2, (N+2))]
 
+def _fetch_row_matrix_Anq(Ω, Θ, N, normalize = False):
+    # q is implied by the length of θ
+    # Cache the Lazutkin coordinates of the orbit once and for all
+    x=np.array([Ω.Lazutkin(θ) for θ in Θ])
+
+    # Cache the angles φ_j
+    Δ=np.diff(np.pad(Ω.γ(Θ),((0,0),(0,1)),'wrap'))
+
+    sinφ = np.sin(np.arctan2(Δ[1],Δ[0])-Θ)
+
+    if (normalize):
+        normalization = 1./np.sum(sinφ)
+    else:
+        normalization = 1;
+
+    return [np.sum(np.cos(2*math.pi*k * x)*sinφ*normalization)
+            for k in range(2, (N+2))]
+
 # this computes all elements of the matrix.
 def gen_matrix_Anq(Ω, N):
-    q = []
     matrix = np.array([[]])
-    
-    for i in range(2, (N+2), 1):
-        q += [i]
+
 
     #Generate each index of a row in the matrix
     partial = time.time()
 
     #Create process pool, mapping to each row in the matrix to be built
     pool = Pool(MAX_JOBS)
-    matrix = pool.starmap(_build_matrix_row, zip(itertools.repeat(Ω), itertools.repeat(N), q))
+    matrix = pool.starmap(_build_matrix_row, zip(itertools.repeat(Ω), itertools.repeat(N), range(2,(N+2))))
     pool.close()
     pool.join()
-    
+
     end = time.time()
 
     #print(f'-periodic orbit found in {partial-partial}s,{N} Rows computed in {end-partial}s')
@@ -93,20 +103,8 @@ if __name__ == "__main__":
     #BUILD THE ORIGINAL DOMAIN
     Ω = Domain('coeff1.txt')
 
-    print(Ω.pairs)
-
-    orig_q = 201
-    orig_ep = 2*math.pi/orig_q
-    
-    theta_list_domain = [theta for theta in np.arange(0,(orig_q*orig_ep) + orig_ep,orig_ep)]
-
-    x_list_domain, y_list_domain = getPoints(Ω.pairs, theta_list_domain)
-
-    #plt.axes().set_aspect('equal')
-    #plt.plot(x_list_domain,y_list_domain)
-
     N = 1000
-    
+
     matrix = gen_matrix_Anq(Ω, N)
 
     temp = np.linalg.eigvals(matrix)
@@ -140,17 +138,7 @@ if __name__ == "__main__":
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
         plt.savefig(f'eigens//eigens_{n}.png')
-        plt.show()
-
-        '''
-        #PRINTS THE MATRIX IN READABLE FORM
-        np.set_printoptions(threshold=np.inf)
-        for cell in matrix:
-            string = ''
-            for item in cell:
-                string = f'{string} {item.round(3)}'
-            print(string)
-        '''
+        #plt.show()
 
     plt.figure()
     plt.xlim(min_x - 0.5, max_x + 0.5)
@@ -160,7 +148,7 @@ if __name__ == "__main__":
     plt.ylabel('Imaginary')
     plt.xlabel('Real')
     plt.savefig(f'eigens//eigens_{N}.png')
-    plt.show()
+#    plt.show()
 
 
 
