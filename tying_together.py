@@ -48,10 +48,10 @@ def _fetch_row_matrix_Anq(Ω, Θ, N, normalize = False):
 
     if (normalize):
         normalization = 1./np.sum(sinφ)
+        return [np.sum(np.cos(2*math.pi*k * x)*sinφ*normalization)
+            for k in range(2, (N+2))]
     else:
-        normalization = 1;
-
-    return [np.sum(np.cos(2*math.pi*k * x)*sinφ*normalization)
+        return [np.sum(np.cos(2*math.pi*k * x)*sinφ)
             for k in range(2, (N+2))]
 
 # this computes all elements of the matrix.
