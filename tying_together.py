@@ -70,7 +70,6 @@ def gen_matrix_Anq(Ω, N):
 
     end = time.time()
 
-    #print(f'-periodic orbit found in {partial-partial}s,{N} Rows computed in {end-partial}s')
     print(f'{N} Rows computed in {end-partial}s')
 
     return np.array(matrix)
@@ -94,17 +93,12 @@ if __name__ == "__main__":
     max_y = max(y_list)
     min_y = min(y_list)
 
-    print('MATRIX COMPUTED')
-    #print(matrix)
-
     for n in range(2,N):
-        #print(matrix[0:n,0:n])
         inner_matrix = matrix[0:n,0:n]
         eigenvals = np.linalg.eigvals(inner_matrix)
 
-        # extract real part
+        # extract real and imaginary
         x = [ele.real for ele in eigenvals]
-        # extract imaginary part
         y = [ele.imag for ele in eigenvals]
 
         plt.figure()
@@ -115,19 +109,3 @@ if __name__ == "__main__":
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
         plt.savefig(f'eigens//eigens_{n:04}.png')
-        #plt.show()
-
-    plt.figure()
-    plt.xlim(min_x - 0.5, max_x + 0.5)
-    plt.ylim(min_y - 0.5, max_y + 0.5)
-    plt.scatter(x_list, y_list)
-
-    plt.ylabel('Imaginary')
-    plt.xlabel('Real')
-    plt.savefig(f'eigens//eigens_{N}.png')
-#    plt.show()
-
-
-
-        #print('')
-        #print(f'eigens: {eigenvals}')
