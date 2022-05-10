@@ -235,7 +235,22 @@ Now, just for fun, we add a method for plotting the domain
         plt.axes().set_aspect('equal')
         x_l,y_l=list(zip(*γ_list))
         plt.plot(x_l,y_l)
+
+    def plot_orbit(self,θ):
+        self.plot()
+        x,y=self.γ(np.pad(θ,(0,1)))
+        plt.plot(x,y)
+        for t in θ:
+            x,y = self.γ(t)
+            l = 0.3
+            xx = [x-l*np.cos(t),x+l*np.cos(t)]
+            yy = [y-l*np.sin(t),y+l*np.sin(t)]
+            plt.plot(xx,yy,linestyle='dotted',color='grey')
+        plt.show()
 #+end_src
+
+#+RESULTS:
+: None
 
 ** Lazutkin parametrization
 
