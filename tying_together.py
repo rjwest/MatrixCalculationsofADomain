@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
-        plt.savefig(f'eigens//eigens_{n}.png')
+        plt.savefig(f'eigens//eigens_{n:04}.png')
         #plt.show()
 
     plt.figure()
