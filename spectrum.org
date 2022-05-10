@@ -320,7 +320,7 @@ at the origin and /symmetric/ means that the orbit is symmetric with
 respect to the symmetry axis of the domain
 
 #+begin_src python
-    def maximal_marked_symmetric_orbit(self,q):
+    def maximal_marked_symmetric_orbit(self,q, verbose = False):
         if (not self.is_symmetric()):
             raise Exception('Symmetric orbits can be found only for symmetric domains')
         if (q < 2):
@@ -341,7 +341,7 @@ respect to the symmetry axis of the domain
                                     Θ_guess,
                                     method = 'CG',
                                     jac = lambda Θp:-self.gradient_L_even(Θp))
-            if (not res.success):
+            if (not res.success or verbose):
                 print(res)
             return self.unfold_even_orbit(res["x"])
         else:
