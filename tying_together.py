@@ -23,7 +23,7 @@ from domain import Domain
 # diagonal for the disk
 
 # Defines number of multithreaded pools **May require lower setting**
-MAX_JOBS = 16
+MAX_JOBS = multiprocessing.cpu_count()+1
 
 def _build_matrix_row(Ω, N, q):
     # Set up uniform (equispaced) initial conditions for gradient
