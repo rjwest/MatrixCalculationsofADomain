@@ -36,28 +36,6 @@ def _build_matrix_row(Ω, N, q):
 
     return row
 
-def _fetch_row_matrix_Anq_old(Ω, θ, N, normalize = False):
-    # q is implied by the length of θ
-    # Cache the Lazutkin coordinates of the orbit once and for all
-    x=list(map(Ω.Lazutkin,θ))
-
-    # Cache the angles φ_j
-    p=list(map(Ω.γ,θ))
-    q=len(θ)
-
-    sinφ=[np.sin(np.arctan2(p[(j+1)%q][1] - p[j][1]
-                            ,p[(j+1)%q][0] - p[j][0])-θ[j])
-          for j in range(q)]
-
-    if (normalize):
-        normalization = 1/sum([ sinφ[j] for j in range(q)])
-    else:
-        normalization = 1;
-
-    return [sum([ np.cos(2*math.pi*k * x[j])*sinφ[j]*normalization
-                  for j in range(q)])
-            for k in range(2, (N+2))]
-
 def _fetch_row_matrix_Anq(Ω, Θ, N, normalize = False):
     # q is implied by the length of θ
     # Cache the Lazutkin coordinates of the orbit once and for all
