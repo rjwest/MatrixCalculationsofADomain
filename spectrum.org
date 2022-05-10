@@ -20,6 +20,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 from scipy import integrate as integrate
+
+from termcolor import colored
+import sys
 #+end_src
 
 The constructor of the class loads a file and parses its content.
@@ -354,7 +357,16 @@ respect to the symmetry axis of the domain
                                     Θ_guess,
                                     method = 'CG',
                                     jac = lambda Θp:-self.gradient_L_odd(Θp))
-            if (not res.success):
+            if (not res.success or verbose):
                 print(res)
             return self.unfold_odd_orbit(res["x"])
+#+end_src
+
+** CLI interface
+   Welcome the user and let them choose what to do.
+#+begin_src python
+if __name__ == "__main__":
+    print(colored(  'Numerical dynamical  spectral rigidity','blue'),
+          colored('\n· Jacopo De Simoi + Robert Westhaver ·','yellow'))
+    sys.ps1="ndsr → "
 #+end_src
