@@ -11,8 +11,7 @@ import matplotlib.pyplot as plt
 import time
 import itertools
 from multiprocessing.pool import Pool
-
-from tangent_parameterization import getPoints
+import multiprocessing
 
 from domain import Domain
 
