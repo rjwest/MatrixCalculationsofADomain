@@ -44,7 +44,12 @@ def _fetch_row_matrix_Anq(Ω, Θ, N, normalize = False):
     # Cache the angles φ_j
     Δ=np.diff(np.pad(Ω.γ(Θ),((0,0),(0,1)),'wrap'))
 
-    sinφ = np.sin(np.arctan2(Δ[1],Δ[0])-Θ)
+    μ = Ω.μ(Θ)
+
+    sinφ = np.sin(np.arctan2(Δ[1],Δ[0])-Θ)/μ
+
+    # Compute the μ function and normalize
+
 
     if (normalize):
         normalization = 1./np.sum(sinφ)
