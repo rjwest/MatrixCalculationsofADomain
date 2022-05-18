@@ -278,6 +278,11 @@ optimize the choice of initial conditions.
             2*math.pi*x,
             lambda t: (self.ρ(t)**(1/3)/self.Lazutkin_perimeter))
 #+end_src
+We alse define the Lazutkin weight μ
+#+begin_src python
+    def μ(self, θ):
+        return 1/(2*self.Lazutkin_perimeter*self.ρ(θ)**(1/3))
+#+end_src
 
 ** Periodic orbits
 
