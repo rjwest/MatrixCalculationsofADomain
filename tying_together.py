@@ -109,8 +109,10 @@ if __name__ == "__main__":
         plt.figure()
         plt.xlim(min_x - 0.5, max_x + 0.5)
         plt.ylim(min_y - 0.5, max_y + 0.5)
-        plt.scatter(x, y)
+        plt.scatter(x, y, s= 10 ,alpha=0.4)
 
         plt.ylabel('Imaginary')
         plt.xlabel('Real')
+        plt.title(f' Spectrum of $A_{{ {n} }}$')
         plt.savefig(f'eigens//eigens_{n:04}.png')
+        plt.close()
