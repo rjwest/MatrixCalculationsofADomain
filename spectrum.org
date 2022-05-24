@@ -20,6 +20,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 from scipy import integrate as integrate
+
+from termcolor import colored
+import sys
 #+end_src
 
 The constructor of the class loads a file and parses its content.
@@ -47,8 +50,9 @@ class Domain:
             for line in fp:
                 line = line.strip()
                 self.pairs = line.split('~')
-                self.ρ_Fourier_coefficients = [list(map(float,pair.split(','))) for pair in self.pairs]
-
+                self.ρ_Fourier_coefficients = [[float(x) for x in pair.split(',')] for pair in self.pairs]
+                self.enumerated_ρ_coefficients = enumerate(self.ρ_Fourier_coefficients)
+                self.enumerated_ρ_coefficients = list(filter(lambda x: x[1][0] != 0. or  x[1][1] != 0.,self.enumerated_ρ_coefficients))
         # For now, throw an exception if the domain is not symmetric
         if (not self.is_symmetric()):
             raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
@@ -85,13 +89,13 @@ symmetric domains
 #+begin_src python
     def _ρ_generic(self,Θ):
         pt = 0
-        for n,(a,b) in enumerate(self.ρ_Fourier_coefficients):
+        for n,(a,b) in self.enumerated_ρ_coefficients:
             pt += ((a * np.sin(n*Θ)) + (b * np.cos(n*Θ)))
         return pt
 
     def _ρ_symmetric(self,Θ):
         pt = 0
-        for n,(_,b) in enumerate(self.ρ_Fourier_coefficients):
+        for n,(_,b) in self.enumerated_ρ_coefficients:
             pt += b * np.cos(n*Θ)
         return pt
 #+end_src
@@ -103,8 +107,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k in range(2, len(self.ρ_Fourier_coefficients),1):
-            a,b = self.ρ_Fourier_coefficients[k]
+        for k,(a,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
                 ((a/2) * (((1 - (np.cos((k + 1)*θ))) / (k + 1)) +
                           ((1 - (np.cos((k - 1)*θ))) / (k - 1))) +
@@ -121,8 +124,7 @@ Next, we define a method γ which returns the point parametrized by θ:
             self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
             self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
-        for k in range(2, len(self.ρ_Fourier_coefficients),1):
-            _,b = self.ρ_Fourier_coefficients[k]
+        for k,(_,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
                 ((b/2) * (((np.sin((k + 1)*θ)) / (k + 1)) +
                           ((np.sin((k - 1)*θ)) / (k - 1)))),
@@ -236,7 +238,22 @@ Now, just for fun, we add a method for plotting the domain
         plt.axes().set_aspect('equal')
         x_l,y_l=list(zip(*γ_list))
         plt.plot(x_l,y_l)
+
+    def plot_orbit(self,θ):
+        self.plot()
+        x,y=self.γ(np.pad(θ,(0,1)))
+        plt.plot(x,y)
+        for t in θ:
+            x,y = self.γ(t)
+            l = 0.3
+            xx = [x-l*np.cos(t),x+l*np.cos(t)]
+            yy = [y-l*np.sin(t),y+l*np.sin(t)]
+            plt.plot(xx,yy,linestyle='dotted',color='grey')
+        plt.show()
 #+end_src
+
+#+RESULTS:
+: None
 
 ** Lazutkin parametrization
 
@@ -260,6 +277,11 @@ optimize the choice of initial conditions.
             lambda t: self.Lazutkin(t)-x,
             2*math.pi*x,
             lambda t: (self.ρ(t)**(1/3)/self.Lazutkin_perimeter))
+#+end_src
+We alse define the Lazutkin weight μ
+#+begin_src python
+    def μ(self, θ):
+        return 1/(2*self.Lazutkin_perimeter*self.ρ(θ)**(1/3))
 #+end_src
 
 ** Periodic orbits
@@ -303,7 +325,7 @@ at the origin and /symmetric/ means that the orbit is symmetric with
 respect to the symmetry axis of the domain
 
 #+begin_src python
-    def maximal_marked_symmetric_orbit(self,q):
+    def maximal_marked_symmetric_orbit(self,q, verbose = False):
         if (not self.is_symmetric()):
             raise Exception('Symmetric orbits can be found only for symmetric domains')
         if (q < 2):
@@ -324,7 +346,7 @@ respect to the symmetry axis of the domain
                                     Θ_guess,
                                     method = 'CG',
                                     jac = lambda Θp:-self.gradient_L_even(Θp))
-            if (not res.success):
+            if (not res.success or verbose):
                 print(res)
             return self.unfold_even_orbit(res["x"])
         else:
@@ -340,7 +362,16 @@ respect to the symmetry axis of the domain
                                     Θ_guess,
                                     method = 'CG',
                                     jac = lambda Θp:-self.gradient_L_odd(Θp))
-            if (not res.success):
+            if (not res.success or verbose):
                 print(res)
             return self.unfold_odd_orbit(res["x"])
+#+end_src
+
+** CLI interface
+   Welcome the user and let them choose what to do.
+#+begin_src python
+if __name__ == "__main__":
+    print(colored(  'Numerical dynamical  spectral rigidity','blue'),
+          colored('\n· Jacopo De Simoi + Robert Westhaver ·','yellow'))
+    sys.ps1="ndsr → "
 #+end_src
