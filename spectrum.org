@@ -25,6 +25,19 @@ from termcolor import colored
 import sys
 #+end_src
 
+The _Cache class constructor is a internal cache that object which
+holds data on the orbits, fourier coefficients, and matrix of a
+orbit that has been explored, this enables an easy way to save and
+revisit calculations
+
+#+begin_src_python
+class _Cache:
+    def __init__(self, orbits=None, p_fourier_coefficients=None, matrix=None):
+        self.orbits = orbits
+        self.p_fourier_coefficients = p_fourier_coefficients
+        self.matrix = matrix
+#+end_src
+
 The constructor of the class loads a file and parses its content.
 The file –for now– is one line of tilde-separated list of pairs a,b,
 where
@@ -46,27 +59,36 @@ case.
 #+begin_src python
 class Domain:
     def __init__(self, fname):
-        with open(fname) as fp:
-            for line in fp:
-                line = line.strip()
-                self.pairs = line.split('~')
-                self.ρ_Fourier_coefficients = [[float(x) for x in pair.split(',')] for pair in self.pairs]
-                self.enumerated_ρ_coefficients = enumerate(self.ρ_Fourier_coefficients)
+        stringified_fname = str(fname)
+        if '.json' in stringified_fname:
+            with open(fname) as fp:
+                pairs = json.load(fp)
+                try:
+                    self.cache = _Cache(p_fourier_coefficients = pairs['pairs'])
+                except KeyError:
+                    raise Exception('Invalid json file input! Must be in the format {"pairs": [[x,y], [z,i],...]}')
+                self.enumerated_ρ_coefficients = enumerate(self.cache.ρ_Fourier_coefficients)
                 self.enumerated_ρ_coefficients = list(filter(lambda x: x[1][0] != 0. or  x[1][1] != 0.,self.enumerated_ρ_coefficients))
-        # For now, throw an exception if the domain is not symmetric
-        if (not self.is_symmetric()):
-            raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
+            # For now, throw an exception if the domain is not symmetric
+            if (not self.is_symmetric()):
+                raise Exception('The domain is not ℤ₂-symmetric; routines have not yet been implemented in this case')
 
-        # Select the appropriate methods depending on the symmetry
-        # properties
-        if (self.is_symmetric()):
-            self.ρ = self._ρ_symmetric
-            self.γ = self._γ_symmetric
+            # Select the appropriate methods depending on the symmetry
+            # properties
+            if (self.is_symmetric()):
+                self.ρ = self._ρ_symmetric
+                self.γ = self._γ_symmetric
+            else:
+                self.ρ = self._ρ_generic
+                self.γ = self._γ_generic
+
+            self.Lazutkin_perimeter = self.raw_Lazutkin(2*math.pi)
+            
+        elif '.pkl' in stringified_fname:
+            with open(fname, 'rb') as fp:
+                 self.cache = cpickle.load(fp)
         else:
-            self.ρ = self._ρ_generic
-            self.γ = self._γ_generic
-
-        self.Lazutkin_perimeter = self.raw_Lazutkin(2*math.pi)
+            raise Exception('The input file must be of type JSON (.json) or pickle (.pkl)')
 #+end_src
 
 - TODO Modify the code to accept a json file, instead
@@ -76,11 +98,21 @@ It would be then easy to store (cache) further information about the
 
 ** Basic methods
 
+We define a method to save the cached model to a pkl file so that it
+can be shared or visited at a later time. Since the matrix is NxN
+we classify the model file by N
+#+begin_src python
+def save_model(self):
+        with open(f'model_{self.cache.matrix.shape()[0]}_matrix_DESCRIPTION_OF_DOAMIN.pkl', 'wb') as fp:
+            cpickle.dump(self.cache, fp)
+        return True
+#+end_src
+
 We define a method to check the symmetry of the domain.
 Recall that a domain is ℤ₂-symmetric if the $a$-coefficients are all 0.
 #+begin_src python
     def is_symmetric(self):
-        return all(( (a == 0) for a,_ in self.ρ_Fourier_coefficients))
+        return all(( (a == 0) for a,_ in self.cache.ρ_Fourier_coefficients))
 #+end_src
 
 We define a method to return the curvature function computed at
@@ -104,8 +136,8 @@ Next, we define a method γ which returns the point parametrized by θ:
 #+begin_src python
     def _γ_generic(self, θ):
         res = np.array([
-            self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
-            self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
+            self.cache.ρ_Fourier_coefficients[0][1] * np.sin(θ),
+            self.cache.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
         for k,(a,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
@@ -121,8 +153,8 @@ Next, we define a method γ which returns the point parametrized by θ:
 
     def _γ_symmetric(self, θ):
         res = np.array([
-            self.ρ_Fourier_coefficients[0][1] * np.sin(θ),
-            self.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
+            self.cache.ρ_Fourier_coefficients[0][1] * np.sin(θ),
+            self.cache.ρ_Fourier_coefficients[0][1] * (1-np.cos(θ))])
 
         for k,(_,b) in self.enumerated_ρ_coefficients[1:]:
             res += np.array([
@@ -305,6 +337,7 @@ orbits.
                                 jac = lambda Θp:-self.gradient_L(Θp))
         if (not res.success):
             print(res)
+	self.cache.orbits = res["x"]
         return res["x"]
 #+end_src
 
